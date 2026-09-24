@@ -8,19 +8,25 @@ Then copy lelib.py from the SimpleLE repo into this project's folder.
 import time
 
 import legoeducation as le
-from lelib import colorSensor, controller
+from lelib import colorSensor, controller, singleMotor
 
 # --- Bluetooth card info for your hardware -------------------------------
 # Fill these in with the color/serial printed on your LEGO connection card.
 # Valid values: le.LEGO_COLOR_RED, _YELLOW, _BLUE, _GREEN, _PURPLE,
 # _MAGENTA, _AZURE, _ORANGE.
-COLOR_SENSOR_CARD_COLOR = le.LEGO_COLOR_ORANGE
-COLOR_SENSOR_CARD_SERIAL = 7552
+COLOR_SENSOR_CARD_COLOR = le.LEGO_COLOR_BLUE
+COLOR_SENSOR_CARD_SERIAL = 3685
 
-CONTROLLER_CARD_COLOR = le.LEGO_COLOR_ORANGE
-CONTROLLER_CARD_SERIAL = 7552
+CONTROLLER_CARD_COLOR = le.LEGO_COLOR_BLUE
+CONTROLLER_CARD_SERIAL = 3685
+
+MOTOR_CARD_COLOR = le.LEGO_COLOR_BLUE
+MOTOR_CARD_SERIAL = 3685
+MOTOR_SPEED = 50  # percent, used by the color-triggered motor commands below
 
 POLL_DELAY_S = 0.1  # seconds between reads
+
+motor = None  # set in main(); the Do*() handlers below read this global
 
 
 
@@ -68,22 +74,24 @@ def DoMagenta():
 
 
 def DoOrange():
-    pass
+    print("orange -- motor clockwise")
+    motor.run(MOTOR_SPEED)
 
 
 
 def DoAzure():
-    pass
+    print("azure -- motor counterclockwise")
+    motor.run(-MOTOR_SPEED)
 
 
 
 def DoNoColor():
-    pass
+    motor.stop()
 
 
 
 def DoUnknownColor():
-    pass
+    motor.stop()
 
 
 
@@ -186,11 +194,16 @@ def handle_controller(ctl):
 # --- Main loop -------------------------------------------------------------
 
 def main():
+    global motor
+
     sensor = colorSensor()
     sensor.connect(card_serial=COLOR_SENSOR_CARD_SERIAL, card_color=COLOR_SENSOR_CARD_COLOR)
 
     ctl = controller()
     ctl.connect(card_serial=CONTROLLER_CARD_SERIAL, card_color=CONTROLLER_CARD_COLOR)
+
+    motor = singleMotor()
+    motor.connect(card_serial=MOTOR_CARD_SERIAL, card_color=MOTOR_CARD_COLOR)
 
     try:
         while True:
@@ -199,6 +212,11 @@ def main():
             time.sleep(POLL_DELAY_S)
     except KeyboardInterrupt:
         pass
+    finally:
+        motor.stop()
+        motor.disconnect()
+        sensor.disconnect()
+        ctl.disconnect()
 
 
 
