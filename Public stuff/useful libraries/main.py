@@ -8,19 +8,24 @@ Then copy lelib.py from the SimpleLE repo into this project's folder.
 import time
 
 import legoeducation as le
-from lelib import colorSensor, controller
+from lelib import colorSensor, controller, singleMotor
 
 # --- Bluetooth card info for your hardware -------------------------------
 # Fill these in with the color/serial printed on your LEGO connection card.
 # Valid values: le.LEGO_COLOR_RED, _YELLOW, _BLUE, _GREEN, _PURPLE,
 # _MAGENTA, _AZURE, _ORANGE.
-COLOR_SENSOR_CARD_COLOR = le.LEGO_COLOR_ORANGE
-COLOR_SENSOR_CARD_SERIAL = 7552
+COLOR_SENSOR_CARD_COLOR = le.LEGO_COLOR_BLUE
+COLOR_SENSOR_CARD_SERIAL = 3685
 
-CONTROLLER_CARD_COLOR = le.LEGO_COLOR_ORANGE
-CONTROLLER_CARD_SERIAL = 7552
+CONTROLLER_CARD_COLOR = le.LEGO_COLOR_BLUE
+CONTROLLER_CARD_SERIAL = 3685
+
+MOTOR_CARD_COLOR = le.LEGO_COLOR_BLUE
+MOTOR_CARD_SERIAL = 3685
 
 POLL_DELAY_S = 0.1  # seconds between reads
+
+motor = singleMotor()  # connected in main()
 
 
 
@@ -48,22 +53,26 @@ def DoTeal():
 
 
 def DoGreen():
-    pass
+    print("green")
+    motor.motor_run_for_degrees(180, direction=le.MOTOR_MOVE_DIRECTION_COUNTERCLOCKWISE)
 
 
 
 def DoPurple():
-    pass
+    print("purple")
+    motor.motor_run_for_degrees(360, direction=le.MOTOR_MOVE_DIRECTION_COUNTERCLOCKWISE)
 
 
 
 def DoWhite():
-    pass
+    print("white")
+    motor.motor_run_for_degrees(180, direction=le.MOTOR_MOVE_DIRECTION_CLOCKWISE)
 
 
 
 def DoMagenta():
-    pass
+    print("magenta")
+    motor.motor_run_for_degrees(360, direction=le.MOTOR_MOVE_DIRECTION_CLOCKWISE)
 
 
 
@@ -191,6 +200,8 @@ def main():
 
     ctl = controller()
     ctl.connect(card_serial=CONTROLLER_CARD_SERIAL, card_color=CONTROLLER_CARD_COLOR)
+
+    motor.connect(card_serial=MOTOR_CARD_SERIAL, card_color=MOTOR_CARD_COLOR)
 
     try:
         while True:
