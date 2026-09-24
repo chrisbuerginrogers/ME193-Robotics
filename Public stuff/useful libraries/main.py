@@ -8,19 +8,35 @@ Then copy lelib.py from the SimpleLE repo into this project's folder.
 import time
 
 import legoeducation as le
-from lelib import colorSensor, controller
+from lelib import colorSensor, controller, doubleMotor
 
 # --- Bluetooth card info for your hardware -------------------------------
 # Fill these in with the color/serial printed on your LEGO connection card.
 # Valid values: le.LEGO_COLOR_RED, _YELLOW, _BLUE, _GREEN, _PURPLE,
 # _MAGENTA, _AZURE, _ORANGE.
-COLOR_SENSOR_CARD_COLOR = le.LEGO_COLOR_ORANGE
-COLOR_SENSOR_CARD_SERIAL = 7552
+COLOR_SENSOR_CARD_COLOR = le.LEGO_COLOR_RED
+COLOR_SENSOR_CARD_SERIAL = 1129
 
-CONTROLLER_CARD_COLOR = le.LEGO_COLOR_ORANGE
-CONTROLLER_CARD_SERIAL = 7552
+CONTROLLER_CARD_COLOR = le.LEGO_COLOR_RED
+CONTROLLER_CARD_SERIAL = 1129
+
+DOUBLE_MOTOR_CARD_COLOR = le.LEGO_COLOR_RED
+DOUBLE_MOTOR_CARD_SERIAL = 1129
 
 POLL_DELAY_S = 0.1  # seconds between reads
+
+# --- Double Motor settings -------------------------------------------------
+MOTOR_SPEED = 50  # percent, 0-100
+
+# The two motors face opposite ways, so "forward" is a different rotation on
+# each side. If a wheel spins the wrong way, swap CLOCKWISE/COUNTERCLOCKWISE
+# for that side.
+LEFT_FORWARD = le.MOTOR_MOVE_DIRECTION_COUNTERCLOCKWISE
+LEFT_BACKWARD = le.MOTOR_MOVE_DIRECTION_CLOCKWISE
+RIGHT_FORWARD = le.MOTOR_MOVE_DIRECTION_CLOCKWISE
+RIGHT_BACKWARD = le.MOTOR_MOVE_DIRECTION_COUNTERCLOCKWISE
+
+dm = None  # the Double Motor, connected in main()
 
 
 
@@ -88,32 +104,36 @@ def DoUnknownColor():
 
 
 def DoLeftUp():
-    pass
+    # Left motor only, forwards
+    dm.motor_run(direction=LEFT_FORWARD, motor=le.MOTOR_LEFT, speed=MOTOR_SPEED)
 
 
 
 def DoLeftDown():
-    pass
+    # Left motor only, backwards
+    dm.motor_run(direction=LEFT_BACKWARD, motor=le.MOTOR_LEFT, speed=MOTOR_SPEED)
 
 
 
 def DoLeftReleased():
-    pass
+    dm.motor_stop(motor=le.MOTOR_LEFT)
 
 
 
 def DoRightUp():
-    pass
+    # Right motor only, forwards
+    dm.motor_run(direction=RIGHT_FORWARD, motor=le.MOTOR_RIGHT, speed=MOTOR_SPEED)
 
 
 
 def DoRightDown():
-    pass
+    # Right motor only, backwards
+    dm.motor_run(direction=RIGHT_BACKWARD, motor=le.MOTOR_RIGHT, speed=MOTOR_SPEED)
 
 
 
 def DoRightReleased():
-    pass
+    dm.motor_stop(motor=le.MOTOR_RIGHT)
 
 
 
@@ -186,6 +206,10 @@ def handle_controller(ctl):
 # --- Main loop -------------------------------------------------------------
 
 def main():
+    global dm
+    dm = doubleMotor()
+    dm.connect(card_serial=DOUBLE_MOTOR_CARD_SERIAL, card_color=DOUBLE_MOTOR_CARD_COLOR)
+
     sensor = colorSensor()
     sensor.connect(card_serial=COLOR_SENSOR_CARD_SERIAL, card_color=COLOR_SENSOR_CARD_COLOR)
 
@@ -199,6 +223,8 @@ def main():
             time.sleep(POLL_DELAY_S)
     except KeyboardInterrupt:
         pass
+    finally:
+        dm.motor_stop(motor=le.MOTOR_BOTH)
 
 
 
