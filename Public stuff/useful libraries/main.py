@@ -112,22 +112,24 @@ def DoMagenta():
 
 
 def DoOrange():
-    pass
+    print("orange -- motor clockwise")
+    motor.run(MOTOR_SPEED)
 
 
 
 def DoAzure():
-    pass
+    print("azure -- motor counterclockwise")
+    motor.run(-MOTOR_SPEED)
 
 
 
 def DoNoColor():
-    pass
+    motor.stop()
 
 
 
 def DoUnknownColor():
-    pass
+    motor.stop()
 
 
 
