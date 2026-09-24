@@ -98,22 +98,22 @@ def DoLeftDown():
 
 
 def DoLeftReleased():
-    pass
+    print("left released")
 
 
 
 def DoRightUp():
-    pass
+    print("right up")
 
 
 
 def DoRightDown():
-    pass
+    print("right down")
 
 
 
 def DoRightReleased():
-    pass
+    print("right released")
 
 
 
