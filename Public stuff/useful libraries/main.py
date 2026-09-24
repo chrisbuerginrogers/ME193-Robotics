@@ -15,10 +15,10 @@ from lelib import colorSensor, controller
 # Valid values: le.LEGO_COLOR_RED, _YELLOW, _BLUE, _GREEN, _PURPLE,
 # _MAGENTA, _AZURE, _ORANGE.
 COLOR_SENSOR_CARD_COLOR = le.LEGO_COLOR_ORANGE
-COLOR_SENSOR_CARD_SERIAL = 7552
+COLOR_SENSOR_CARD_SERIAL = 1142
 
-CONTROLLER_CARD_COLOR = le.LEGO_COLOR_ORANGE
-CONTROLLER_CARD_SERIAL = 7552
+CONTROLLER_CARD_COLOR = le.LEGO_RED
+CONTROLLER_CARD_SERIAL = 1142
 
 POLL_DELAY_S = 0.1  # seconds between reads
 
@@ -68,7 +68,7 @@ def DoMagenta():
 
 
 def DoOrange():
-    pass
+    print("orange")
 
 
 
