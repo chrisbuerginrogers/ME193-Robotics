@@ -8,19 +8,30 @@ Then copy lelib.py from the SimpleLE repo into this project's folder.
 import time
 
 import legoeducation as le
-from lelib import colorSensor, controller
+from lelib import colorSensor, controller, singleMotor, doubleMotor
 
 # --- Bluetooth card info for your hardware -------------------------------
 # Fill these in with the color/serial printed on your LEGO connection card.
 # Valid values: le.LEGO_COLOR_RED, _YELLOW, _BLUE, _GREEN, _PURPLE,
 # _MAGENTA, _AZURE, _ORANGE.
-COLOR_SENSOR_CARD_COLOR = le.LEGO_COLOR_ORANGE
-COLOR_SENSOR_CARD_SERIAL = 7552
+COLOR_SENSOR_CARD_COLOR = le.LEGO_COLOR_PINK
+COLOR_SENSOR_CARD_SERIAL = 0998
 
-CONTROLLER_CARD_COLOR = le.LEGO_COLOR_ORANGE
-CONTROLLER_CARD_SERIAL = 7552
+CONTROLLER_CARD_COLOR = le.LEGO_COLOR_PINK
+CONTROLLER_CARD_SERIAL = 0998
+
+SINGLE_MOTOR_CARD_COLOR = le.LEGO_COLOR_PINK
+SINGLE_MOTOR_CARD_SERIAL = 0998
+
+DOUBLE_MOTOR_CARD_COLOR = le.LEGO_COLOR_PINK
+DOUBLE_MOTOR_CARD_SERIAL = 0998
 
 POLL_DELAY_S = 0.1  # seconds between reads
+
+# Motors are module-level so the Do* handlers below can use them,
+# e.g. sm.run(50) or dm.turn_left(90). They're connected in main().
+sm = singleMotor()
+dm = doubleMotor()
 
 
 
@@ -192,6 +203,9 @@ def main():
     ctl = controller()
     ctl.connect(card_serial=CONTROLLER_CARD_SERIAL, card_color=CONTROLLER_CARD_COLOR)
 
+    sm.connect(card_serial=SINGLE_MOTOR_CARD_SERIAL, card_color=SINGLE_MOTOR_CARD_COLOR)
+    dm.connect(card_serial=DOUBLE_MOTOR_CARD_SERIAL, card_color=DOUBLE_MOTOR_CARD_COLOR)
+
     try:
         while True:
             handle_color(sensor.detect_color())
@@ -199,6 +213,9 @@ def main():
             time.sleep(POLL_DELAY_S)
     except KeyboardInterrupt:
         pass
+    finally:
+        sm.stop()
+        dm.stop()
 
 
 
