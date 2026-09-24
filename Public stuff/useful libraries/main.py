@@ -24,9 +24,17 @@ MOTOR_CARD_COLOR = le.LEGO_COLOR_BLUE
 MOTOR_CARD_SERIAL = 3685
 MOTOR_SPEED = 50  # percent, used by the color-triggered motor commands below
 
+SINGLE_MOTOR_CARD_COLOR = le.LEGO_COLOR_ORANGE
+SINGLE_MOTOR_CARD_SERIAL = 7552
+
 POLL_DELAY_S = 0.1  # seconds between reads
 
-motor = None  # set in main(); the Do*() handlers below read this global
+motor = None  # set to a connected singleMotor in main()
+
+
+def beep():
+    """Beep the single motor's built-in speaker."""
+    motor.beep()
 
 
 
@@ -203,7 +211,7 @@ def main():
     ctl.connect(card_serial=CONTROLLER_CARD_SERIAL, card_color=CONTROLLER_CARD_COLOR)
 
     motor = singleMotor()
-    motor.connect(card_serial=MOTOR_CARD_SERIAL, card_color=MOTOR_CARD_COLOR)
+    motor.connect(card_serial=SINGLE_MOTOR_CARD_SERIAL, card_color=SINGLE_MOTOR_CARD_COLOR)
 
     try:
         while True:
