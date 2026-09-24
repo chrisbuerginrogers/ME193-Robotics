@@ -113,7 +113,7 @@ def DoRightDown():
 
 
 def DoRightReleased():
-    pass
+    print("right joystick released")
 
 
 
