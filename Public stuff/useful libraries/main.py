@@ -15,17 +15,18 @@ from lelib import colorSensor, controller
 # Valid values: le.LEGO_COLOR_RED, _YELLOW, _BLUE, _GREEN, _PURPLE,
 # _MAGENTA, _AZURE, _ORANGE.
 COLOR_SENSOR_CARD_COLOR = le.LEGO_COLOR_ORANGE
-COLOR_SENSOR_CARD_SERIAL = 1142
+COLOR_SENSOR_CARD_SERIAL = 7552
 
-CONTROLLER_CARD_COLOR = le.LEGO_RED
-CONTROLLER_CARD_SERIAL = 1142
+CONTROLLER_CARD_COLOR = le.LEGO_COLOR_ORANGE
+CONTROLLER_CARD_SERIAL = 7552
 
 POLL_DELAY_S = 0.1  # seconds between reads
 
 
 
-# --- Empty handler functions ----------------------------------------------
-# Fill these in with whatever behavior you want.
+# --- Handler functions ------------------------------------------------------
+# Each one runs once when its color/joystick state starts.
+# Replace the print with whatever behavior you want.
 
 def DoRed():
     print("red")
@@ -43,27 +44,27 @@ def DoBlue():
 
 
 def DoTeal():
-    pass
+    print("teal")
 
 
 
 def DoGreen():
-    pass
+    print("green")
 
 
 
 def DoPurple():
-    pass
+    print("purple")
 
 
 
 def DoWhite():
-    pass
+    print("white") #woohoo
 
 
 
 def DoMagenta():
-    pass
+    print("magenta")
 
 
 
@@ -73,47 +74,47 @@ def DoOrange():
 
 
 def DoAzure():
-    pass
+    print("azure")
 
 
 
 def DoNoColor():
-    pass
+    print("no color")
 
 
 
 def DoUnknownColor():
-    pass
+    print("unknown color")
 
 
 
 def DoLeftUp():
-    pass
+    print("left joystick up")
 
 
 
 def DoLeftDown():
-    pass
+    print("left joystick down")
 
 
 
 def DoLeftReleased():
-    pass
+    print("left joystick released")
 
 
 
 def DoRightUp():
-    pass
+    print("right joystick up")
 
 
 
 def DoRightDown():
-    pass
+    print("right joystick down")
 
 
 
 def DoRightReleased():
-    pass
+    print("right joystick released")
 
 
 
@@ -149,23 +150,20 @@ def handle_color(color_name):
 
 
 
-def handle_controller(ctl):
-    """Big switch statement on the controller's joystick state."""
-    if ctl.left_up():
-        left_state = "up"
-    elif ctl.left_down():
-        left_state = "down"
+def joystick_state(is_up, is_down):
+    """Turn a joystick's up/down readings into "up", "down", or "released"."""
+    if is_up:
+        return "up"
+    elif is_down:
+        return "down"
     else:
-        left_state = "released"
+        return "released"
 
-    if ctl.right_up():
-        right_state = "up"
-    elif ctl.right_down():
-        right_state = "down"
-    else:
-        right_state = "released"
 
-    match left_state:
+
+def handle_left(state):
+    """Switch statement on the left joystick's state."""
+    match state:
         case "up":
             DoLeftUp()
         case "down":
@@ -173,7 +171,11 @@ def handle_controller(ctl):
         case "released":
             DoLeftReleased()
 
-    match right_state:
+
+
+def handle_right(state):
+    """Switch statement on the right joystick's state."""
+    match state:
         case "up":
             DoRightUp()
         case "down":
@@ -192,13 +194,31 @@ def main():
     ctl = controller()
     ctl.connect(card_serial=CONTROLLER_CARD_SERIAL, card_color=CONTROLLER_CARD_COLOR)
 
+    # Remember the last state so handlers only fire when something changes.
+    last_color = None
+    last_left = None
+    last_right = None
+
     try:
         while True:
-            handle_color(sensor.detect_color())
-            handle_controller(ctl)
+            color = sensor.detect_color()
+            if color != last_color:
+                handle_color(color)
+                last_color = color
+
+            left = joystick_state(ctl.left_up(), ctl.left_down())
+            if left != last_left:
+                handle_left(left)
+                last_left = left
+
+            right = joystick_state(ctl.right_up(), ctl.right_down())
+            if right != last_right:
+                handle_right(right)
+                last_right = right
+
             time.sleep(POLL_DELAY_S)
     except KeyboardInterrupt:
-        pass
+        print("stopped")
 
 
 
