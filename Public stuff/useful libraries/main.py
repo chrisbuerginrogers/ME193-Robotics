@@ -98,7 +98,7 @@ def DoLeftDown():
 
 
 def DoLeftReleased():
-    pass
+    print("left joystick released")
 
 
 
