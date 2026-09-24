@@ -93,7 +93,7 @@ def DoLeftUp():
 
 
 def DoLeftDown():
-    pass
+    print("left joystick down")
 
 
 
