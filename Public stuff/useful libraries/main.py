@@ -57,24 +57,35 @@ def DoTeal():
     pass
 
 
-
+# Codrin
 def DoGreen():
-    pass
+    print("green")
+    sm.run(50)   # single: forward, medium
+    dm.run(50)   # double: drive forward, medium
 
 
-
+# Codrin
 def DoPurple():
-    pass
+    print("purple")
+    sm.run(-50)  # single: reverse, medium
+    dm.run(-50)  # double: drive backward, medium
 
 
-
+# Codrin
 def DoWhite():
-    pass
+    print("white")
+    sm.run(100)  # single: forward, full speed
+    dm.set_speed_left(30)   # double: both motors counterclockwise (spins in place)
+    dm.set_speed_right(30)
+    dm.run_left()
+    dm.run_right()
 
 
-
+# Codrin
 def DoMagenta():
-    pass
+    print("magenta")
+    sm.run(-100)  # single: reverse, full speed
+    dm.run(20)    # double: creep forward, slow
 
 
 
