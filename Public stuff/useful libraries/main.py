@@ -88,7 +88,7 @@ def DoUnknownColor():
 
 
 def DoLeftUp():
-    pass
+    print("left joystick up")
 
 
 
