@@ -9,6 +9,13 @@ import time
 import legoeducation as le
 
 
+_CARD_COLOR_NAMES = {
+    0: 'No color', 1: 'Red', 2: 'Yellow', 3: 'Blue',
+    4: 'Teal', 5: 'Green', 6: 'Purple', 7: 'White',
+    8: 'Magenta', 9: 'Orange', 10: 'Azure',
+}
+
+
 class _CardReader:
     """Mixin that adds card-tap reading to any LEGO Education device."""
     _last_card_serial = None
@@ -16,6 +23,12 @@ class _CardReader:
     def card_serial(self):
         """Return the serial number of the card currently on the sensor (0 = no card)."""
         return self.scanned_card.serial
+
+    def card_color_name(self):
+        """Return the name of the color card currently tapped (e.g. 'Red'),
+        or 'No color' if none is tapped. Unlike card_tapped(), this returns
+        the current value every call -- it doesn't track whether it changed."""
+        return _CARD_COLOR_NAMES.get(self.scanned_card.color, 'Unknown')
 
     def card_tapped(self):
         """Return serial number when a new card is placed, else None.
