@@ -108,7 +108,7 @@ def DoRightUp():
 
 
 def DoRightDown():
-    pass
+    print("right joystick down")
 
 
 
