@@ -38,6 +38,11 @@ there. On match day the car is also assigned a role — **ball** or
 | [`songs.py`](./songs.py) | Synthesizes and plays the success/death jingles through the computer speakers |
 | [`lelib.py`](./lelib.py) | Shared LEGO Education wrapper (copied from the class library) |
 | [`mqttlib.py`](./mqttlib.py) | Shared `paho-mqtt` wrapper (copied from the class library) |
+| [`send_mqtt.py`](./send_mqtt.py) | Publishes one MQTT message (`"start"` on `ME193/Rogers` by default) to test the real match flow |
+| [`mqtt_chat.py`](./mqtt_chat.py) | Two-way MQTT chat for checking that two laptops can reach the broker and each other |
+| [`wait_and_launch.py`](./wait_and_launch.py) | Waits for `"start"`, asks for a role, then launches `whistling.py` |
+| [`spectogram.py`](./spectogram.py) | Standalone live scrolling spectrogram (uses `sounddevice`) for checking note pitches |
+| [`TESTING_CHECKLIST.md`](./TESTING_CHECKLIST.md) | Step-by-step checklist for the first run on real LEGO hardware |
 
 ## Setup
 
@@ -45,6 +50,8 @@ there. On match day the car is also assigned a role — **ball** or
 pip install --upgrade pip
 pip install pyaudio numpy matplotlib paho-mqtt legoeducation
 ```
+
+`spectogram.py` also needs `sounddevice` (`pip install sounddevice`).
 
 `pyaudio` needs the PortAudio C library installed first (`brew install
 portaudio` on macOS) — see [Getting pyaudio installed without
