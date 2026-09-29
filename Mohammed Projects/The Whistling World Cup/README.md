@@ -94,6 +94,22 @@ policy, and the Color Sensor's catch detection (getting "caught" in
 practice mode still stops the car and plays the death song, it just has
 no match to report the outcome to).
 
+### Practicing without the LEGO hardware
+
+`--no-lego` skips connecting to the Double Motor and Color Sensor.
+Everything else still runs for real (mic, calibration, live plot, note
+and clap detection), and each motor command is printed in the terminal
+instead of being sent to the car:
+
+```
+python whistling.py --role ball --practice --no-lego
+```
+
+The light sensor always reads 0 in this mode, so the ball can't get
+"caught". Scoring a goal (3 quick RIGHT turns) still works. Drop
+`--practice` to also test the real MQTT flow, e.g. with `send_mqtt.py`
+sending `"start"`.
+
 ## Questions
 
 ### How does the policy make decisions?

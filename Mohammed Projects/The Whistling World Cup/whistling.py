@@ -867,6 +867,39 @@ def pick_input_device(pa):
 # Main
 # --------------------------------------------------------------------------
 
+class FakeDoubleMotor:
+    """Stand-in for the LEGO Double Motor when running with --no-lego:
+    prints what the car would do instead of driving it over Bluetooth."""
+
+    def __init__(self):
+        self._last_tank = None
+
+    def movement_move_tank(self, left, right):
+        if (left, right) != self._last_tank:  # re-issued every COMMAND_PERIOD_S, so only print changes
+            self._last_tank = (left, right)
+            print(f"  [no-lego] tank drive left={left} right={right}")
+
+    def movement_turn_for_degrees(self, degrees, direction=None, speed=None):
+        side = "LEFT" if direction == le.MOVEMENT_TURN_DIRECTION_LEFT else "RIGHT"
+        print(f"  [no-lego] turn {side} {degrees} degrees")
+        self._last_tank = None
+        time.sleep(1.0)  # roughly how long the real blocking turn takes
+
+    def beep(self, frequency, count=1, blocking=True):
+        pass
+
+    def stop_beep(self, blocking=True):
+        pass
+
+
+class FakeColorSensor:
+    """Stand-in for the LEGO Color Sensor when running with --no-lego:
+    always reads 0, so the ball never gets "caught"."""
+
+    def reflection(self):
+        return 0
+
+
 def main():
     parser = argparse.ArgumentParser(description="Sound-controlled LEGO car for the Whistling World Cup.")
     parser.add_argument("--role", choices=["ball", "goalie"], required=True)
@@ -877,20 +910,28 @@ def main():
                               "for practicing before match day")
     parser.add_argument("--recalibrate", action="store_true",
                          help="redo the noise-floor and note calibration instead of reusing the saved ones")
+    parser.add_argument("--no-lego", action="store_true",
+                         help="run without the LEGO hubs -- motor commands are printed instead of sent, "
+                              "and the light sensor always reads 0")
     args = parser.parse_args()
 
     state = SharedState(role=args.role)
     print(f"=== Whistling World Cup -- role: {args.role}{' (PRACTICE MODE)' if args.practice else ''} ===")
 
-    print("Connecting to LEGO Double Motor...")
-    dm = doubleMotor()
-    dm.connect(card_serial=MOTOR_CARD_SERIAL, card_color=MOTOR_CARD_COLOR)
-    print("Connected to motor hub.")
+    if args.no_lego:
+        print("No-LEGO mode: skipping the hubs -- motor commands will be printed here instead.")
+        dm = FakeDoubleMotor()
+        cs = FakeColorSensor()
+    else:
+        print("Connecting to LEGO Double Motor...")
+        dm = doubleMotor()
+        dm.connect(card_serial=MOTOR_CARD_SERIAL, card_color=MOTOR_CARD_COLOR)
+        print("Connected to motor hub.")
 
-    print("Connecting to LEGO Color Sensor (front light sensor)...")
-    cs = colorSensor()
-    cs.connect(card_serial=SENSOR_CARD_SERIAL, card_color=SENSOR_CARD_COLOR)
-    print("Connected to color sensor.")
+        print("Connecting to LEGO Color Sensor (front light sensor)...")
+        cs = colorSensor()
+        cs.connect(card_serial=SENSOR_CARD_SERIAL, card_color=SENSOR_CARD_COLOR)
+        print("Connected to color sensor.")
 
     if args.practice:
         # No broker, no waiting for the instructor's "start" -- drive as soon
