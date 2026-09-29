@@ -5,7 +5,7 @@ repo.
 
 ## Layout
 
-- [`Mohammed Projects/`](./Mohammed%20Projects) — my own individual
+- [`Mohammed's Projects/`](./Mohammed%27s%20Projects) — my own individual
   assignments and coursework.
 - [`Public stuff/`](./Public%20stuff) — the shared class resources (synced
   from the upstream class repo): common libraries, demos, and tools.

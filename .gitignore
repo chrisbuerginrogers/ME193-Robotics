@@ -1,12 +1,12 @@
-# This repo only syncs the "Public stuff" and "Mohammed Projects" folders.
+# This repo only syncs the "Public stuff" and "Mohammed's Projects" folders.
 # Everything else in this working directory is ignored on purpose.
 *
 !.gitignore
 !README.md
 !Public stuff/
 !Public stuff/**
-!Mohammed Projects/
-!Mohammed Projects/**
+!Mohammed's Projects/
+!Mohammed's Projects/**
 
 # OS / editor junk files, ignored even inside "Public stuff"
 **/.DS_Store
