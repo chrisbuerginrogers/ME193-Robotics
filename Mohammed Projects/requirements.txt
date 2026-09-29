@@ -6,3 +6,8 @@ opencv-python>=5.0.0.93   # AprilTagParking.py, PhoneCameraParking.py — camera
 # to work.
 mediapipe==0.10.35
 certifi>=2026.7.22
+pyaudio                   # whistling.py, songs.py — mic capture + song playback (needs PortAudio: `brew install portaudio`)
+numpy                     # whistling.py, songs.py, spectogram.py — FFT pitch detection + tone synthesis
+matplotlib                # whistling.py, spectogram.py — live waveform/spectrum plots
+paho-mqtt>=2.0            # mqttlib.py — MQTT match start/result messages
+sounddevice               # spectogram.py — mic capture for the standalone spectrogram

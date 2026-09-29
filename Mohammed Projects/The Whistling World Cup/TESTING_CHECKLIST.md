@@ -7,9 +7,9 @@ the one above it works.
 
 ## 1. Basic connection (no driving yet)
 
-- [ ] `source /Users/tashasudofsky/AIRobotics/.venv/bin/activate` (the
-      top-level venv, **not** `in class test/.venv`)
-- [ ] `cd /Users/tashasudofsky/AIRobotics/whistlingworldcup`
+- [ ] `cd ~/Documents/GitHub/ME193-Robotics` and
+      `source .venv/bin/activate` (the venv at the repo root)
+- [ ] `cd "Mohammed Projects/The Whistling World Cup"`
 - [ ] Charge/power on the LEGO hub, have the recorder and a working mic
       (AirPods) ready
 - [ ] `python whistling.py --role ball --practice --recalibrate`
