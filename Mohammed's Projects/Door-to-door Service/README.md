@@ -39,6 +39,12 @@ is part of it, so Roboflow can't do everything.
 - How good is the model? Can you confuse it? If so, how (a different
   color minifigure, etc.)?
 
+## Folders
+
+| Folder | What's in it |
+| --- | --- |
+| [YOLO](YOLO/) | Script that fine-tunes a YOLOv8 nano model to detect the green and blue minifigs, plus the Roboflow dataset it trains on |
+
 ## Notes
 
 No code here yet. This folder is a placeholder for the assignment.
