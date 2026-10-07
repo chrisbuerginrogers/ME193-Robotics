@@ -92,9 +92,13 @@ Keep the page open. You'll need its SSH address, which looks like `git@github.co
 
 ## Step 4: Push your board's apps to GitHub
 
-This step happens **on the board**. Log in from your laptop with `ssh arduino@10.5.14.200`, then run the commands below.
+This step happens **on the board**, in several short parts.
 
-**Set up Git:**
+### 4a. Log in to the board
+
+From your laptop, run `ssh arduino@10.5.14.200`.
+
+### 4b. Set up Git
 
 ```
 git --version || sudo apt install -y git
@@ -102,7 +106,9 @@ git config --global user.name "Your Name"
 git config --global user.email "you@example.edu"
 ```
 
-**Give the board permission to push.** Make a key on the board, pressing Enter at every question:
+### 4c. Make a key on the board
+
+Press Enter at every question:
 
 ```
 ssh-keygen -t ed25519 -C "Fred2"
@@ -111,11 +117,21 @@ cat ~/.ssh/id_ed25519.pub
 
 The second command prints **one line** that starts with `ssh-ed25519` and ends with `Fred2`. Copy that whole line. Only ever share the file ending in `.pub`; the one without `.pub` is private and never leaves the board.
 
+### 4d. Give the key to GitHub
+
 On your GitHub repo page, go to **Settings → Deploy keys → Add deploy key**. Paste the line into **Key**, give it a title like "Fred2", check **Allow write access**, and save. A deploy key only works for this one repo.
 
-Test it on the board with `ssh -T git@github.com`. Type `yes` if asked. It should greet you, even though it adds that it doesn't provide shell access.
+### 4e. Test the connection
 
-**Create the repo and push:**
+On the board, run:
+
+```
+ssh -T git@github.com
+```
+
+Type `yes` if asked. It should greet you, even though it adds that it doesn't provide shell access.
+
+### 4f. Create the repo and stage your files
 
 ```
 cd ~/ArduinoApps
@@ -125,13 +141,24 @@ git add .
 git status
 ```
 
-Check the `git status` list: no `.cache` folders should appear. Those hold the Python libraries App Lab installs on the board, and they don't belong on GitHub. Then:
+Check the `git status` list: no `.cache` folders should appear. Those hold the Python libraries App Lab installs on the board, and they don't belong on GitHub.
+
+### 4g. Commit
 
 ```
 git commit -m "Initial commit from my UNO Q"
+```
+
+### 4h. Connect to GitHub and push
+
+Replace `YOUR-USERNAME` with your GitHub username:
+
+```
 git remote add origin git@github.com:YOUR-USERNAME/ArduinoApps.git
 git push -u origin main
 ```
+
+### 4i. Check GitHub and log out
 
 Refresh the GitHub page. Your app folders should be there. Type `exit` to leave the board.
 
