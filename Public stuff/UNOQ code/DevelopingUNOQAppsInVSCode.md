@@ -213,6 +213,7 @@ BOARD_IP = "10.5.14.200"
 3. Pick one of the choices that appears:
    - **Run on UNO Q**: copies the app to the board and starts it.
    - **Python in UNO Q container**: opens a Python prompt in the terminal. If an app is running, the prompt is inside that app, so `arduino.app_utils` works. If nothing is running, it is plain Python on the board's Linux side.
+   - **Terminal on UNO Q**: opens a command-line session on the board, over USB or Wi-Fi. Type `exit` to leave.
    - **Advertise UNO Q on Tufts WiFi**: runs `Tufts_WiFi.py` so your board can be found on the campus network. It needs the `zeroconf` package once (`pip install zeroconf`). Press Ctrl+C in its terminal to stop.
 
 The terminal panel shows each step:
