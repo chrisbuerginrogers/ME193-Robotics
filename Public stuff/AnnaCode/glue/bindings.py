@@ -51,6 +51,7 @@ def _attach_plot_to_device(plot_id: str, dev_name: str, channel: str | None):
         dev.plot_vars.append(channel)
 
 def _detach_plot_from_device(plot_id: str, dev_name: str | None):
+    Device.show_reading(plot_id, None)
     if not dev_name:
         return
     plot_obj = state.all_plots.get(plot_id)

@@ -120,18 +120,6 @@ body {
     box-shadow: var(--card-shadow);
 }
 
-/* ── Devices card ─────────────────────────────────────────────────
-   Left-aligned and fixed-width rather than stretching full page width
-   like the other direct children of .page-wrap, so it reads as a
-   compact panel sitting just above the network diagram. ── */
-.connect-card {
-    align-self: flex-start;
-    width: 280px;
-}
-@media (max-width: 500px) {
-    .connect-card { width: 100%; }
-}
-
 /* ── Curriculum header ────────────────────────────────────────── */
 .header {
     display: grid;
@@ -378,19 +366,19 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 10px 15px;
-    border-radius: 9px;
-    background: var(--accent);
-    color: var(--accent-text);
+    padding: 9px 20px;
+    border-radius: 99px;
+    background: var(--blue-bright);
+    color: #fff;
     font-family: var(--font-ui);
-    font-size: 16px;
-    font-weight: 700;
+    font-size: 13px;
+    font-weight: 600;
     border: none;
     cursor: pointer;
-    transition: background 0.2s, transform 0.1s;
+    transition: opacity 0.15s, transform 0.1s;
     align-self: flex-start;
 }
-.btn-add-device:hover:not(:disabled)  { background: var(--accent-hover); }
+.btn-add-device:hover  { opacity: 0.88; }
 .btn-add-device:active { transform: scale(0.97); }
 
 .device-row {
@@ -853,8 +841,10 @@ body {
 .node-device-select:focus { outline: none; border-color: var(--blue-bright); }
 
 .node-reading {
-    font-family: var(--font-mono);
-    font-size: 11px; font-weight: 600;
+    font-family: var(--font-ui);
+    font-size: 9px; font-weight: 700;
+    letter-spacing: 0.05em;
+    font-variant-numeric: tabular-nums;
     color: var(--text-muted);
     min-width: 40px; text-align: right; flex-shrink: 0;
 }

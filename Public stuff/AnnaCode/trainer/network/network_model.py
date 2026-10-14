@@ -135,10 +135,6 @@ def forward():
         channel  = chan_el.value if chan_el else ""
         Device.run_output(channel, dev_name, result)
 
-        reading_el = get_id(f"reading-output-{oid}")
-        if reading_el:
-            reading_el.textContent = f"{y_val:.2f}"
-
     fit_plot_obj = state.all_plots.get("plot-fit")
     if fit_plot_obj and state.inputs and state.outputs:
         x_val = state.input_values.get(state.inputs[0]["id"], 0.0)

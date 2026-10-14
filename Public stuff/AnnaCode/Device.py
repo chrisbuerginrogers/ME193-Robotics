@@ -163,6 +163,23 @@ def ask_device_type():
     document.body.appendChild(overlay)
     return fut
 
+def show_reading(plot_id: str, val):
+    """Show a node's current device value next to its device dropdown.
+
+    The node's reading element shares its id suffix with its plot
+    ("plot-in-3" -> "reading-in-3"), so the plot loops can report the value
+    they are already plotting. val=None resets it to a dash.
+    """
+    el = document.getElementById(plot_id.replace("plot-", "reading-", 1))
+    if not el:
+        return
+    if val is None:
+        el.textContent = "—"
+    elif isinstance(val, float) and not val.is_integer():
+        el.textContent = f"{val:.2f}"
+    else:
+        el.textContent = str(int(val)) if isinstance(val, (int, float)) else str(val)
+
 class Element:
     def __init__(self):
         self.myble = ble.BLEDevice.new()
@@ -449,6 +466,7 @@ class Element:
                     print("Cannot plot. Error: " + e)
             else: 
                 val = self.state[var]
+            show_reading(graph.id, val)
             update = graph.addPoints(1, [val])
             graph.updatePlot(update)
 
