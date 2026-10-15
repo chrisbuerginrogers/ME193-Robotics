@@ -1,4 +1,4 @@
-name = "network-builder"
+name = "AnnaCode"
 packages = [ "legoeducation==1.0.6","numpy"]
 
 [files]

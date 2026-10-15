@@ -1,5 +1,5 @@
 """
-Neural Network Builder — templates.py
+AnnaCode — templates.py
 
 Pure string-building for network item HTML, plus the append_html /
 append_multi_html DOM-insertion helpers shared by every "add_*" action.

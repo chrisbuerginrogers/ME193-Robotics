@@ -1,5 +1,5 @@
 """
-Neural Network Builder — bindings.py
+AnnaCode — bindings.py
 
 Event binding for network items: neuron equation inputs, device/channel
 plumbing (with attached live plots), and the input/neuron/output/layer

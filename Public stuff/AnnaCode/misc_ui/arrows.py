@@ -1,5 +1,5 @@
 """
-Neural Network Builder — arrows.py
+AnnaCode — arrows.py
 
 SVG arrow primitives and the main network-diagram redraw.
 """

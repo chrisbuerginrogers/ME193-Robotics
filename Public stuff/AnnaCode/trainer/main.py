@@ -1,5 +1,5 @@
 """
-Neural Network Trainer — main.py
+AnnaCode Trainer — main.py
 PyScript 2026.3.1
 
 Structure: independent columns, chained through any number of layers.

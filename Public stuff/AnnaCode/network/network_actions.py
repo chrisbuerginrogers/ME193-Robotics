@@ -1,5 +1,5 @@
 """
-Neural Network Builder — network_actions.py
+AnnaCode — network_actions.py
 
 CRUD for inputs/neurons/layers/outputs (look up via network_model, render
 via templates, wire via bindings, refresh via sync, redraw via arrows), plus

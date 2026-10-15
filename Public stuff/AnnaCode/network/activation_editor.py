@@ -1,5 +1,5 @@
 """
-Neural Network Builder — activation_editor.py
+AnnaCode — activation_editor.py
 
 Per-layer activation select + the custom piecewise-activation editor, plus
 the shared "?" help popover.

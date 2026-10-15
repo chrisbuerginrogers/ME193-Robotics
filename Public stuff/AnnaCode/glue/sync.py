@@ -1,5 +1,5 @@
 """
-Neural Network Builder — sync.py
+AnnaCode — sync.py
 
 Keeps the DOM in sync with topology state after a CRUD action: equation
 labels/weight counts, neuron usage greying, delete-button visibility, and

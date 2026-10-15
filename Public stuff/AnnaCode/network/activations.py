@@ -1,5 +1,5 @@
 """
-Neural Network Builder — activations.py
+AnnaCode — activations.py
 
 Activation math. Every function here takes all its inputs as arguments and
 returns a value -- no DOM access, no mutation of network topology state.

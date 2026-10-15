@@ -1,5 +1,5 @@
 """
-Neural Network Builder — state.py
+AnnaCode — state.py
 
 All module-level globals for the app, plus the get_id() DOM helper.
 No logic beyond get_id lives here, and this file imports nothing from any

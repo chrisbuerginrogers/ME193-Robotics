@@ -1,5 +1,5 @@
 """
-Neural Network Builder — zoom.py
+AnnaCode — zoom.py
 
 Zoom in/out for the network diagram (spacing/box sizes only, plus text
 scaling below TEXT_ZOOM_THRESHOLD) and the resize observer that keeps

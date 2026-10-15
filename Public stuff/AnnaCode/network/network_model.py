@@ -1,5 +1,5 @@
 """
-Neural Network Builder — network_model.py
+AnnaCode — network_model.py
 
 Topology lookups and the forward pass. Imports state and activations only --
 never a rendering/DOM file (templates, arrows, sync, bindings, etc).

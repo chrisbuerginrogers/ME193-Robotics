@@ -1,5 +1,5 @@
 """
-Neural Network Builder — main.py
+AnnaCode — main.py
 PyScript 2026.3.1
 
 Structure: independent columns, chained through any number of layers.

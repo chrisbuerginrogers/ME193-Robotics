@@ -1,4 +1,4 @@
-# AnnaCode — Neural Network Builder and Trainer
+# AnnaCode
 
 Two browser pages for building small neural networks and connecting them to
 LEGO Education hardware (motors, color sensor, controller). Nothing to
