@@ -10,6 +10,7 @@ from pyscript import document, window
 from pyscript.ffi import create_proxy
 
 import state
+import Device
 import network_model
 import templates
 import bindings
@@ -241,6 +242,7 @@ def stop_network(evt=None):
     state.get_id("stop-btn").setAttribute("disabled", "")
     state.get_id("play-btn").removeAttribute("disabled")
     document.body.classList.remove("running")
+    Device.flush_pending_commands()
     for device in state.devices:
         try:
             device.stop()
@@ -259,6 +261,7 @@ def stop_network(evt=None):
 
 async def loop_network():
     while state.is_running:
+        Device.drop_stale_commands()
         network_model.forward()
         if state.debug_mode:
             arrows.redraw_arrows()

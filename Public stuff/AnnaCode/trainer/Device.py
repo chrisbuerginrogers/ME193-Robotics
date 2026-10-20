@@ -252,11 +252,24 @@ def show_reading(plot_id: str, val):
     else:
         el.textContent = str(int(val)) if isinstance(val, (int, float)) else str(val)
 
+def _battery_html(pct) -> str:
+    """Tiny battery icon plus percent; an empty icon with an ellipsis until the hub reports."""
+    if pct is None:
+        return '<span class="battery-body"></span><span class="battery-pct">?</span>'
+    pct = max(0, min(100, int(pct)))
+    color = "var(--red)" if pct < 20 else ("#e0a100" if pct < 50 else "var(--green)")
+    return (f'<span class="battery-body"><span class="battery-fill" '
+            f'style="width:{pct}%;background:{color}"></span></span>'
+            f'<span class="battery-pct">{pct}%</span>')
+
 class Element:
     def __init__(self):
         self.myble = ble.BLEDevice.new()
         self.hub = None
         self.name = None
+        self._logged_items = False
+        self._info_default = None
+        self.battery = None   # percent, from the hub's info notification
         self.plots = []
         self.plot_vars = []
         self.in_list = []
@@ -356,6 +369,7 @@ class Element:
 
         try:
             self.hub = hub_cls()
+            self._info_default = self.hub.info_device   # placeholder until the hub reports
 
             _hub = self.hub
             self._notification_proxy = create_proxy(
@@ -482,11 +496,41 @@ class Element:
         elif "Controller" in self.name:
             return ["LightIntensity", "BeepFrequency"] #["LightColor", "LightPattern", "LightIntensity", "BeepPattern", "BeepFrequency"]
 
+    def sync_battery(self):
+        """Pick up the battery level the library last stored from the hub.
+
+        The first notifications are handled before our callback is attached,
+        so a level carried in one of those is only visible on hub.info_device.
+        """
+        info = getattr(self.hub, "info_device", None)
+        if info is None or info is self._info_default:
+            return
+        if info.batteryLevel != self.battery:
+            print(f"{self.name} battery reading: {info.batteryLevel}")
+            self.battery = info.batteryLevel
+            self._show_battery()
+
+    def _show_battery(self):
+        el = document.querySelector(f'[id="chip-{self.name}"] .device-battery')
+        if el:
+            el.innerHTML = _battery_html(self.battery)
+            el.title = f"Battery {self.battery}%"
+
     def notif_callback(self, data):                    
         parsed_items = le.device_notification_parser(data)
+        self.sync_battery()
+        if not self._logged_items:
+            self._logged_items = True
+            print(f"{self.name} notification items: {[type(i).__name__ for i in parsed_items]}")
         for parsed_item in parsed_items:
-    
-            if isinstance(parsed_item, le.MotorNotification):
+
+            if isinstance(parsed_item, le.InfoDeviceNotification):
+                print(f"{self.name} battery reading: {parsed_item.batteryLevel}")
+                if parsed_item.batteryLevel != self.battery:
+                    self.battery = parsed_item.batteryLevel
+                    self._show_battery()
+
+            elif isinstance(parsed_item, le.MotorNotification):
                 if "Double Motor" in self.name:
                     side = "Left" if parsed_item.motorBitMask == le.MOTOR_BITS_LEFT else "Right"
                     self.state[side + "Position"] = parsed_item.position
@@ -626,12 +670,14 @@ async def add_device_chip(dev: "Element"):
     dl = document.getElementById("device-list")
 
     name = dev.name
+    dev.sync_battery()
     chip = document.createElement("div")
     chip.className = "device-row"
     chip.id = f"chip-{name}"
     chip.innerHTML = (
         f'<div class="device-indicator"></div>'
         f'<span class="device-name">{name}</span>'
+        f'<span class="device-battery" title="{"Battery %d%%" % dev.battery if dev.battery is not None else "Waiting for battery level"}">{_battery_html(dev.battery)}</span>'
         f'<button class="btn-disconnect" title="Disconnect">'
         f'    <svg width="11" height="11" viewBox="0 0 24 24" fill="none"'
         f'         stroke="currentColor" stroke-width="2.5">'
