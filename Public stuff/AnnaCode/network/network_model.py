@@ -42,6 +42,8 @@ def get_source_labels(layer_idx: int) -> list[str]:
         return [inp["name"] for inp in state.inputs]
     return [f"n{idx + 1}" for idx in range(len(state.layers[layer_idx - 1]["neurons"]))]
 
+_last_result = {}   # last int result per output id, to log sudden jumps
+
 def forward():
     # 1. Collect input values.
     # Pragmatic exception: reads the device/channel <select> elements directly
@@ -89,6 +91,11 @@ def forward():
         state.output_values[oid] = val
 
         result = int(val)
+        prev = _last_result.get(oid)
+        if prev is not None and abs(result - prev) >= 40:
+            print(f"Output {oid} jumped {prev} -> {result}; inputs={dict(state.input_values)} "
+                  f"pre={[round(state.neuron_pre_values.get(n['id'], 0), 2) for n in last_layer_neurons]}")
+        _last_result[oid] = result
         dev_el  = state.get_id(f"dev-out-{oid}")
         chan_el = state.get_id(f"chan-out-{oid}")
         dev_name = dev_el.value if dev_el else ""

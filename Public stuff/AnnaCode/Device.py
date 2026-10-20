@@ -280,6 +280,7 @@ class Element:
         self.hub = None
         self.name = None
         self._logged_items = False
+        self.last_cmd = None   # last speed we sent, for diagnostics
         self._info_default = None
         self.battery = None   # percent, from the hub's info notification
         self.plots = []
@@ -547,6 +548,10 @@ class Element:
                     side = "Left" if parsed_item.motorBitMask == le.MOTOR_BITS_LEFT else "Right"
                     self.state[side + "Position"] = parsed_item.position
                     self.state[side + "Angle"] = parsed_item.absolutePosition
+                    old = self.state[side + "Speed"]
+                    if old is not None and abs(parsed_item.speed - old) >= 60:
+                        print(f"{self.name} {side} motor speed jumped {old} -> {parsed_item.speed}; "
+                              f"last commanded={self.last_cmd}, queue={bd.my_worker.request_queue.qsize()}")
                     self.state[side + "Speed"] = parsed_item.speed
                     self.state[side + "Power"] = parsed_item.power
                 else:
@@ -599,6 +604,7 @@ class Element:
             graph.updatePlot(update)
 
     def set_speed(self, speed):
+        self.last_cmd = speed
         if "Single Motor" in self.name:
             #self.hub.motor_set_speed(speed, blocking=False)
             self.hub.motor_run(speed=speed, blocking=False)
