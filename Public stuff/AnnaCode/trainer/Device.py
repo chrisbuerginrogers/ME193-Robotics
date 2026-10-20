@@ -551,8 +551,8 @@ class Element:
                 self.state["AccelerationY"] = parsed_item.accelerometerY
                 self.state["AccelerationZ"] = parsed_item.accelerometerZ
                 self.state["GyroX"] = parsed_item.gyroscopeX
-                self.state["GyroY"] = parsed_item.gyroscopeX
-                self.state["GyroZ"] = parsed_item.gyroscopeX
+                self.state["GyroY"] = parsed_item.gyroscopeY
+                self.state["GyroZ"] = parsed_item.gyroscopeZ
 
             elif isinstance(parsed_item, le.ColorSensorNotification):
                 self.state["Reflection"] = parsed_item.reflection
