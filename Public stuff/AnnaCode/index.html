@@ -53,11 +53,18 @@
                     <button class="mode-btn active" id="mode-beginner-btn">Beginner</button>
                     <button class="mode-btn" id="mode-advanced-btn">Advanced</button>
                 </div>
+                <select class="preset-select" id="preset-select" title="Load a worked example"></select>
                 <div class="zoom-control" title="Zoom the network diagram">
                     <button class="btn-zoom" id="zoom-out-btn" title="Zoom out">&minus;</button>
                     <span class="zoom-level" id="zoom-level-label">100%</span>
                     <button class="btn-zoom" id="zoom-in-btn" title="Zoom in">+</button>
                 </div>
+            </div>
+
+            <div class="preset-caption hidden" id="preset-caption"></div>
+            <div class="hint-banner hidden" id="hint-banner">
+                <span id="hint-text"></span>
+                <button class="hint-close" id="hint-close-btn" title="Dismiss">&times;</button>
             </div>
 
             <div class="network-body">
@@ -90,6 +97,7 @@
                         </svg>
                         <span>Layer</span>
                     </button>
+                    <button class="help-btn inline" data-help="layer" title="Help">?</button>
                 </div>
 
                 <!-- Outputs column -->
@@ -125,6 +133,7 @@
             </div>
 
             <div class="transfer-card" id="transfer-card">
+                <button class="help-btn corner" data-help="plot" title="Help">?</button>
                 <div class="transfer-plot" id="transfer-plot"></div>
                 <div class="transfer-hint">Hit Run</div>
             </div>
@@ -135,13 +144,26 @@
                     <label>x axis:
                         <select id="adv-x-select"></select>
                     </label>
+                    <button class="help-btn inline" data-help="plot" title="Help">?</button>
                     <span class="adv-plot-note">solid = after activation &middot; dashed = before activation &middot; dot = live value</span>
                 </div>
+                <div class="collapse-note" id="collapse-note"></div>
                 <div id="adv-plot"></div>
             </div>
 
         </div>
 
+        <p class="learn-more">New to neurons? Read
+            <a href="https://app.notion.com/p/A-Neuron-Anna-style-3fa2f91361d380e5804cccee36124bcb" target="_blank" rel="noopener">A Neuron (Anna style)</a>
+            for the full story.</p>
+
+    </div>
+
+    <!-- ── Just-in-time help popover ─────────────────────────────── -->
+    <div id="help-popover" class="help-popover hidden">
+        <button class="hint-close" id="help-close-btn" title="Close">&times;</button>
+        <p id="help-body"></p>
+        <a href="https://app.notion.com/p/A-Neuron-Anna-style-3fa2f91361d380e5804cccee36124bcb" target="_blank" rel="noopener">Learn more</a>
     </div>
 
     <!-- ── Activation help popover ───────────────────────────────── -->
@@ -160,6 +182,8 @@
                 An activation function is applied to each neuron's output before it becomes
                 usable downstream. It introduces non-linearity so the network can learn
                 complex patterns. One activation function is shared by every neuron.
+                Without one, any number of neurons and layers collapses into a single line (y = mx + b);
+                a non-linear activation stops that, so line segments can add up to curves.
             </p>
             <div class="act-help-list">
                 <div class="act-help-item">
@@ -168,19 +192,19 @@
                 </div>
                 <div class="act-help-item">
                     <span class="act-help-name">ReLU</span>
-                    <span class="act-help-desc">Sets negative values to zero. Fast and widely used in deep learning.</span>
+                    <span class="act-help-desc">y = max(0, x). Keeps positives, sets negatives to zero. Cheap, so common in deep networks, but a neuron stuck at 0 can &ldquo;die&rdquo; (leaky ReLU, max(0.01x, x), avoids that).</span>
                 </div>
                 <div class="act-help-item">
                     <span class="act-help-name">Sigmoid</span>
-                    <span class="act-help-desc">Squashes output to (0, 1). Good for probability outputs.</span>
+                    <span class="act-help-desc">y = 1 / (1 + e<sup>&minus;x</sup>). An S-curve between 0 and 1. Good for probability outputs.</span>
                 </div>
                 <div class="act-help-item">
                     <span class="act-help-name">Tanh</span>
-                    <span class="act-help-desc">Squashes output to (−1, 1). Zero-centred, often better than Sigmoid.</span>
+                    <span class="act-help-desc">y = (e<sup>x</sup> &minus; e<sup>&minus;x</sup>) / (e<sup>x</sup> + e<sup>&minus;x</sup>). Between &minus;1 and 1; being centred on zero can mean faster training.</span>
                 </div>
                 <div class="act-help-item">
                     <span class="act-help-name">Softplus</span>
-                    <span class="act-help-desc">Smooth approximation of ReLU. Always positive with no hard zero.</span>
+                    <span class="act-help-desc">y = ln(1 + e<sup>x</sup>). A smooth ReLU that only approaches zero, with no hard cut-off.</span>
                 </div>
                 <div class="act-help-item">
                     <span class="act-help-name">Custom</span>

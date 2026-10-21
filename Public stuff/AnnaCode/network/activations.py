@@ -22,6 +22,8 @@ def sigmoid_numpy(x):
     return 1.0 / (1.0 + np.exp(-x))
 
 def apply_activation(x: float, fn: str, custom_activation: dict | None = None) -> float:
+    if state.beginner_mode:   # Beginner hides the activation blocks, so it ignores them too
+        return x
     if fn == "relu":
         return max(0.0, x)
     elif fn == "sigmoid":

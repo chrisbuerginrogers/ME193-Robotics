@@ -34,8 +34,14 @@ def _js(obj):
     return js.JSON.parse(json.dumps(obj))
 
 def _axis_label(kind: str, item_id: int, fallback: str) -> str:
-    el = state.get_id(f"chan-{kind}-{item_id}")
-    return el.value if el and el.value else fallback
+    """What the student picked for this input/output, e.g. 'Reflection (Color Sensor)'."""
+    dev_el = state.get_id(f"dev-{kind}-{item_id}")
+    chan_el = state.get_id(f"chan-{kind}-{item_id}")
+    dev = dev_el.value if dev_el else ""
+    chan = chan_el.value if chan_el else ""
+    if chan and dev:
+        return f"{chan} ({dev})"
+    return chan or dev or fallback
 
 def _sweep_axis(base: list[float], idx: int):
     span = max(100.0, abs(base[idx]))
@@ -65,7 +71,7 @@ def redraw_beginner():
     ]
     layout = {
         "margin": {"l": 55, "r": 20, "t": 10, "b": 45},
-        "xaxis": {"title": {"text": inp["name"], "font": {"size": 13}}, "zeroline": True},
+        "xaxis": {"title": {"text": _axis_label("in", inp["id"], inp["name"]), "font": {"size": 13}}, "zeroline": True},
         "yaxis": {"title": {"text": _axis_label("out", out["id"], "output"), "font": {"size": 13}},
                   "zeroline": True},
         "showlegend": False,
@@ -79,7 +85,7 @@ def _sync_x_select():
     """Keep the x-axis dropdown in step with the inputs; returns the chosen input index."""
     global _adv_select_key
     sel = state.get_id(ADV_SELECT_ID)
-    names = [i["name"] for i in state.inputs]
+    names = [_axis_label("in", i["id"], i["name"]) for i in state.inputs]
     key = "|".join(names)
     if key != _adv_select_key:
         prev = int(sel.value) if sel.value else 0
@@ -97,6 +103,7 @@ def redraw_advanced():
     xi = _sync_x_select()
     base = [state.input_values.get(i["id"], 0.0) for i in state.inputs]
     xs = _sweep_axis(base, xi)
+    _update_collapse_note([_axis_label("in", i["id"], i["name"]) for i in state.inputs])
 
     def sweep(x):
         vals = list(base)
@@ -146,13 +153,46 @@ def redraw_advanced():
                            "xaxis": f"x{sfx}", "yaxis": f"y{sfx}", "hoverinfo": "skip",
                            "marker": {"color": color, "size": 9, "line": {"color": "#fff", "width": 1.5}}})
     layout[f"xaxis{len(panels) if len(panels) > 1 else ''}"]["title"] = {
-        "text": state.inputs[xi]["name"], "font": {"size": 13}}
+        "text": _axis_label("in", state.inputs[xi]["id"], state.inputs[xi]["name"]), "font": {"size": 13}}
 
     el.style.height = f"{len(panels) * PANEL_HEIGHT + 60}px"
     if len(panels) != _adv_panel_count:
         Plotly.purge(ADV_ID)   # drop stale axes when panels come or go
         _adv_panel_count = len(panels)
     Plotly.react(ADV_ID, _js(traces), _js(layout), _js(CONFIG))
+
+def _fmt(v: float) -> str:
+    return f"{v:.2f}".rstrip("0").rstrip(".") or "0"
+
+def _update_collapse_note(xi_names: list[str]):
+    """With no activation anywhere, stacked layers collapse into one line per
+    output -- show that line. With an activation they cannot be merged."""
+    note = state.get_id("collapse-note")
+    if len(state.layers) < 2:
+        note.innerHTML = ""
+        return
+    if any(l["act_fn"] for l in state.layers):
+        note.textContent = "Because of the activation, these layers can't be merged into a single line."
+        return
+    n = len(state.inputs)
+    zero = network_model.evaluate([0.0] * n)
+    lines = []
+    for j, out in enumerate(state.outputs):
+        if j >= len(zero):
+            break
+        terms = ""
+        for i in range(n):
+            e = [0.0] * n
+            e[i] = 1.0
+            m = network_model.evaluate(e)[j] - zero[j]
+            if abs(m) > 1e-9:
+                terms += f" {'-' if m < 0 else '+'} {_fmt(abs(m))}·{xi_names[i]}" if terms else f"{_fmt(m)}·{xi_names[i]}"
+        b = zero[j]
+        if abs(b) > 1e-9 or not terms:
+            terms += f" {'-' if b < 0 else '+'} {_fmt(abs(b))}" if terms else _fmt(b)
+        lines.append(f"<b>{_axis_label('out', out['id'], f'output {j + 1}')} = {terms}</b>")
+    note.innerHTML = ("With no activation, your layers collapse into one line per output: "
+                      + "; ".join(lines) + ". An activation lets the lines bend so they can't be merged.")
 
 async def run_loop():
     while True:

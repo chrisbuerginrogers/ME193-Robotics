@@ -137,7 +137,9 @@ def _bind_item_events(item_id, prefix, item_lookup_fn, delete_fn,
     if chan_sel:
         chan_sel.addEventListener("change", create_proxy(channel_change_fn))
 
-    del_btn = state.get_id(f"del-{prefix}-{item_id}")
+    # device/channel ids use "in"/"out" but the delete buttons are "del-input-N"/"del-output-N"
+    del_kind = {"in": "input", "out": "output"}.get(prefix, prefix)
+    del_btn = state.get_id(f"del-{del_kind}-{item_id}")
     if del_btn:
         del_btn.addEventListener("click", create_proxy(lambda evt: delete_fn(item_id)))
 

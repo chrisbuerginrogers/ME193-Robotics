@@ -1677,3 +1677,4 @@ body {
     .col-activation { margin-right: 40px; }
     .col-add-layer { margin-right: 40px; }
 }
+.dataset-tip { margin: 0 0 8px; font-size: 12px; line-height: 1.5; color: var(--text-secondary); }

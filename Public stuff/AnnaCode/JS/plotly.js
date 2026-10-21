@@ -1,5 +1,5 @@
 export function newPlot(divName, data, layout){
-    Plotly.newPlot(document.getElementById(divName), data, layout, {responsive: true});
+    Plotly.newPlot(document.getElementById(divName), data, layout, {responsive: true, staticPlot: true});
 }
 
 export function update(divName, data, layout){

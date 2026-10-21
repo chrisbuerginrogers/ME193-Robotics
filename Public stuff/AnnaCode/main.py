@@ -33,6 +33,8 @@ import network_actions
 import activation_editor
 import zoom
 import transfer_plot
+import help_system
+import presets
 import asyncio
 
 # ── Static wiring ──────────────────────────────────────────────────────────────
@@ -52,6 +54,8 @@ def _on_add_layer(evt):
 @when("click", "#add-output-btn")
 def _on_add_output(evt):
     network_actions.add_output()
+    if len(state.outputs) == 2:
+        help_system.show_hint("outputs")
 
 @when("click", "#play-btn")
 def _on_play(evt):
@@ -77,6 +81,22 @@ def _on_zoom_in(evt):
 def _on_debug_toggle(evt):
     state.debug_mode = evt.target.checked
     arrows.redraw_arrows()
+
+@when("change", "#preset-select")
+def _on_preset(evt):
+    key = evt.target.value
+    caption = state.get_id("preset-caption")
+    presets.load(key)
+    caption.textContent = presets.PRESETS[key]["caption"] if key else ""
+    caption.classList.toggle("hidden", not key)
+
+@when("click", "#help-close-btn")
+def _on_help_close(evt):
+    help_system.close_help()
+
+@when("click", "#hint-close-btn")
+def _on_hint_close(evt):
+    help_system.close_hint()
 
 def set_mode(beginner: bool):
     state.beginner_mode = beginner
@@ -105,6 +125,8 @@ def boot():
     network_actions.add_layer()
     network_actions.add_output()
 
+    presets.populate_select(state.get_id("preset-select"))
+    help_system.setup()
     set_mode(state.beginner_mode)
     asyncio.ensure_future(transfer_plot.run_loop())
     zoom.apply_zoom()
