@@ -42,21 +42,29 @@ def get_source_labels(layer_idx: int) -> list[str]:
         return [inp["name"] for inp in state.inputs]
     return [f"n{idx + 1}" for idx in range(len(state.layers[layer_idx - 1]["neurons"]))]
 
-def evaluate(input_vals: list[float]) -> list[float]:
-    """Pure forward pass (no state/device side effects): the last layer's
-    activated neuron outputs for the given input values."""
+def evaluate_layers(input_vals: list[float]) -> list[list[tuple[float, float]]]:
+    """Pure forward pass (no state/device side effects): for every layer, a
+    (pre_activation, post_activation) pair per neuron."""
     source_values = list(input_vals)
+    result = []
     for layer in state.layers:
-        next_source_values = []
+        layer_vals = []
         for n in layer["neurons"]:
             weighted = sum(
                 n["weights"][i] * source_values[i]
                 for i in range(min(len(n["weights"]), len(source_values)))
             )
-            next_source_values.append(activations.apply_activation(
-                weighted + n["bias"], layer["act_fn"], layer["custom_activation"]))
-        source_values = next_source_values
-    return source_values
+            pre_act = weighted + n["bias"]
+            layer_vals.append((pre_act, activations.apply_activation(
+                pre_act, layer["act_fn"], layer["custom_activation"])))
+        result.append(layer_vals)
+        source_values = [post for _, post in layer_vals]
+    return result
+
+def evaluate(input_vals: list[float]) -> list[float]:
+    """The last layer's activated neuron outputs for the given input values."""
+    layers = evaluate_layers(input_vals)
+    return [post for _, post in layers[-1]] if layers else []
 
 _last_result = {}   # last int result per output id, to log sudden jumps
 

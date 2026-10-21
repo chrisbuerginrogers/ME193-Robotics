@@ -950,3 +950,19 @@ body.running .transfer-plot { opacity: 1; filter: none; }
     pointer-events: none;
 }
 body.running .transfer-hint { display: none; }
+
+/* Advanced-only per-neuron plot, below the run button */
+.adv-plot-card { margin-top: 28px; }
+.beginner .adv-plot-card { display: none; }
+.adv-plot-controls {
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    padding-bottom: 8px;
+    font-size: 12px; font-weight: 600; color: var(--text-secondary);
+}
+.adv-plot-controls select {
+    margin-left: 6px; padding: 4px 8px; border-radius: 6px;
+    border: 1px solid var(--border-mid); background: #fff;
+    font-family: var(--font-ui); font-size: 12px; color: var(--text-primary);
+}
+.adv-plot-note { color: var(--text-muted); font-weight: 500; }
+#adv-plot { width: 100%; }
