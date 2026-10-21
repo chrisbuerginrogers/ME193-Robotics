@@ -3,6 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <script>
+        // Web Bluetooth (needed for the hardware) only exists in Chrome/Chromium browsers
+        if (!navigator.bluetooth) {
+            alert("AnnaCode only works with hardware in Google Chrome.\n\nPlease reopen this page in Chrome to connect to your hub.");
+        }
+    </script>
     <link rel="stylesheet" href="https://pyscript.net/releases/2026.3.1/core.css">
     <script type="module" src="https://pyscript.net/releases/2026.3.1/core.js"></script>
     <title>AnnaCode</title>
