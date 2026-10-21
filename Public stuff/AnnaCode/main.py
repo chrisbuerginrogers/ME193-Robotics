@@ -32,6 +32,8 @@ import arrows
 import network_actions
 import activation_editor
 import zoom
+import transfer_plot
+import asyncio
 
 # ── Static wiring ──────────────────────────────────────────────────────────────
 
@@ -76,6 +78,22 @@ def _on_debug_toggle(evt):
     state.debug_mode = evt.target.checked
     arrows.redraw_arrows()
 
+def set_mode(beginner: bool):
+    state.beginner_mode = beginner
+    state.get_id("page-wrap").classList.toggle("beginner", beginner)
+    state.get_id("mode-beginner-btn").classList.toggle("active", beginner)
+    state.get_id("mode-advanced-btn").classList.toggle("active", not beginner)
+    # Layout changed (columns hidden/shown) -- re-measure the arrows
+    arrows.schedule_redraw()
+
+@when("click", "#mode-beginner-btn")
+def _on_mode_beginner(evt):
+    set_mode(True)
+
+@when("click", "#mode-advanced-btn")
+def _on_mode_advanced(evt):
+    set_mode(False)
+
 # ── Boot ───────────────────────────────────────────────────────────────────────
 
 def boot():
@@ -87,6 +105,8 @@ def boot():
     network_actions.add_layer()
     network_actions.add_output()
 
+    set_mode(state.beginner_mode)
+    asyncio.ensure_future(transfer_plot.run_loop())
     zoom.apply_zoom()
     zoom.setup_resize_observer()
     arrows.schedule_redraw(150)

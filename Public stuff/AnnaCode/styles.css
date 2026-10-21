@@ -444,10 +444,10 @@ body {
     background: transparent;
     border: none;
     border-bottom: 2px solid var(--blue-mid);
-    color: var(--text-primary);
+    color: #000;
     font-family: var(--font-mono);
-    font-size: 13px;
-    font-weight: 600;
+    font-size: 16px;
+    font-weight: 700;
     padding: 3px 2px;
     text-align: center;
     transition: border-color 0.15s;
@@ -542,8 +542,9 @@ body {
     margin: 0 1px;
 }
 .eq-var {
-    color: var(--text-secondary);
-    font-size: calc(11px * var(--text-zoom));
+    color: #000;
+    font-size: calc(14px * var(--text-zoom));
+    font-weight: 700;
     margin-right: 2px;
 }
 
@@ -889,3 +890,63 @@ body {
     .col-activation { margin-right: 40px; }
     .col-add-layer { margin-right: 40px; }
 }
+/* ── Beginner / Advanced toggle ───────────────────────────────── */
+.zoom-bar { align-items: center; gap: 24px; }
+.mode-toggle {
+    display: inline-flex;
+    border: 2px solid var(--blue-mid);
+    border-radius: 99px;
+    overflow: hidden;
+}
+.mode-btn {
+    background: transparent;
+    border: none;
+    padding: 6px 16px;
+    font-family: var(--font-ui);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--blue-bright);
+    cursor: pointer;
+}
+.mode-btn.active { background: var(--blue-bright); color: #fff; }
+
+/* Beginner: no activation blocks, no add/delete buttons, a big number instead of the graph */
+.beginner .zoom-control,
+.beginner .col-activation,
+.beginner .col-add-layer,
+.beginner .btn-add-col,
+.beginner .item-delete-btn { display: none !important; }
+/* Plots stay laid out (just invisible and out of flow) so Plotly keeps its
+   real width -- display:none made it size them wrong when switching to Advanced */
+.beginner .node-plot { position: absolute; visibility: hidden; width: 170px; pointer-events: none; }
+.beginner .node-header { flex-direction: column; align-items: stretch; gap: 8px; border-bottom: none; padding-bottom: 8px; }
+.beginner .node-reading {
+    margin-top: 4px;
+    font-size: calc(44px * var(--text-zoom));
+    letter-spacing: 0;
+    text-align: center;
+    color: var(--text-primary);
+    min-width: 0;
+    padding: 12px 0 4px;
+}
+
+/* Beginner-only transfer plot under the run button */
+.network-body { display: flex; align-items: flex-start; gap: 32px; width: fit-content; min-width: 100%; }
+.network-main { flex-shrink: 0; }
+.transfer-card { display: none; justify-content: center; align-self: center; flex: 1 1 360px; min-width: 360px; }
+.beginner .transfer-card { display: flex; }
+.transfer-plot { width: 100%; max-width: 520px; height: 300px; }
+/* Greyed out until Run is pressed (play_network adds .running to <body>) */
+.transfer-plot { opacity: 0.3; filter: grayscale(1); transition: opacity 0.2s, filter 0.2s; }
+body.running .transfer-plot { opacity: 1; filter: none; }
+
+/* "Hit Run" overlay: sits above the greyed-out plot, hidden once running. */
+.transfer-card { position: relative; }
+.transfer-hint {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px; font-weight: 700;
+    color: var(--text-primary);
+    pointer-events: none;
+}
+body.running .transfer-hint { display: none; }

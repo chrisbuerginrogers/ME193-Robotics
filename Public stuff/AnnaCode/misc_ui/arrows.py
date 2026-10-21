@@ -169,6 +169,18 @@ def redraw_arrows():
         neuron_l_pts, neuron_r_pts, neuron_heights = _anchor_points("cell-neuron-", layer["neurons"])
         if not neuron_l_pts:
             return
+        if state.beginner_mode:
+            # Activation blocks are hidden: neurons connect straight on
+            if idx + 1 < len(state.layers):
+                next_l_pts, _, next_heights = _anchor_points("cell-neuron-", state.layers[idx + 1]["neurons"])
+                fan_arrows(svg_el, neuron_r_pts, next_l_pts, neuron_heights, next_heights,
+                           value_fn=lambda nid: state.neuron_post_values.get(nid))
+            else:
+                # last layer -> outputs, paired positionally (1st neuron <-> 1st output)
+                for (nx, ny, nid), (ox, oy, oid) in zip(neuron_r_pts, out_l_pts):
+                    straight_arrow(svg_el, nx, ny, ox, oy, stroke_w=2.0,
+                                   debug_value=state.output_values.get(oid))
+            continue
         act_el = state.get_id(f"act-box-{lid}")
         if not act_el:
             continue

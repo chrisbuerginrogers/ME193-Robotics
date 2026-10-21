@@ -49,6 +49,10 @@
         <div class="card network-card">
 
             <div class="zoom-bar">
+                <div class="mode-toggle" id="mode-toggle" title="Beginner hides the activation blocks, the add buttons and the graphs">
+                    <button class="mode-btn active" id="mode-beginner-btn">Beginner</button>
+                    <button class="mode-btn" id="mode-advanced-btn">Advanced</button>
+                </div>
                 <div class="zoom-control" title="Zoom the network diagram">
                     <button class="btn-zoom" id="zoom-out-btn" title="Zoom out">&minus;</button>
                     <span class="zoom-level" id="zoom-level-label">100%</span>
@@ -56,6 +60,8 @@
                 </div>
             </div>
 
+            <div class="network-body">
+            <div class="network-main">
             <div class="network-wrap" id="network-wrap">
                 <svg id="arrow-svg" aria-hidden="true"></svg>
 
@@ -111,10 +117,17 @@
                     </svg>
                 </button>
                 <label class="debug-toggle hidden" id="debug-toggle-wrap" title="Show live values on the arrows">
-                    <input type="checkbox" id="debug-toggle" />
+                    <input type="checkbox" id="debug-toggle" checked />
                     <span class="debug-toggle-track"><span class="debug-toggle-thumb"></span></span>
                     <span class="debug-toggle-label">Debug</span>
                 </label>
+            </div>
+            </div>
+
+            <div class="transfer-card" id="transfer-card">
+                <div class="transfer-plot" id="transfer-plot"></div>
+                <div class="transfer-hint">Hit Run</div>
+            </div>
             </div>
 
         </div>

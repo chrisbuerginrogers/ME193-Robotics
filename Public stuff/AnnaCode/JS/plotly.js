@@ -5,3 +5,7 @@ export function newPlot(divName, data, layout){
 export function update(divName, data, layout){
     Plotly.update(document.getElementById(divName),  data, layout);
 }
+
+export function react(divName, data, layout, config){
+    Plotly.react(document.getElementById(divName), data, layout, config);
+}

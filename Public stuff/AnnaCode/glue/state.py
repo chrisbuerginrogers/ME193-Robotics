@@ -23,7 +23,8 @@ devices: list = []   # list[Device.Element]
 is_running       = False
 all_plots: dict[str, object] = {}
 
-debug_mode = False
+debug_mode = True
+beginner_mode = True    # True hides activation blocks, add/delete buttons and plots
 
 # Zoom only affects the network diagram's spacing/box sizes (via the CSS
 # --zoom variable) -- never font sizes or arrow stroke widths, UNTIL zoom

@@ -42,6 +42,22 @@ def get_source_labels(layer_idx: int) -> list[str]:
         return [inp["name"] for inp in state.inputs]
     return [f"n{idx + 1}" for idx in range(len(state.layers[layer_idx - 1]["neurons"]))]
 
+def evaluate(input_vals: list[float]) -> list[float]:
+    """Pure forward pass (no state/device side effects): the last layer's
+    activated neuron outputs for the given input values."""
+    source_values = list(input_vals)
+    for layer in state.layers:
+        next_source_values = []
+        for n in layer["neurons"]:
+            weighted = sum(
+                n["weights"][i] * source_values[i]
+                for i in range(min(len(n["weights"]), len(source_values)))
+            )
+            next_source_values.append(activations.apply_activation(
+                weighted + n["bias"], layer["act_fn"], layer["custom_activation"]))
+        source_values = next_source_values
+    return source_values
+
 _last_result = {}   # last int result per output id, to log sudden jumps
 
 def forward():
