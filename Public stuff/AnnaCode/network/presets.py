@@ -35,11 +35,11 @@ PRESETS = {
     },
     "line": {
         "label": "Follow a line",
-        "caption": "Subtract 75 from the sensor reading, then add the result to one motor and subtract it from the other. Try the Debug switch.",
+        "caption": "Subtract 75 from the sensor reading, scale it by -0.2, then add -10 to one motor and +10 to the other. Try the Debug switch.",
         "n_in": 1, "n_out": 2,
         "layers": [
             [{"w": [1.0], "b": -75.0}],
-            [{"w": [0.2], "b": 10.0}, {"w": [0.2], "b": -10.0}],
+            [{"w": [-0.2], "b": -10.0}, {"w": [-0.2], "b": 10.0}],
         ],
     },
 }

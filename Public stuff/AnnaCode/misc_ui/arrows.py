@@ -65,6 +65,16 @@ def debug_label(svg_el, x: float, y: float, value: float):
     svg_el.appendChild(rect)
     svg_el.appendChild(txt)
 
+LEVEL_TOL = 30   # one-to-one arrows whose ends are this close in height are drawn dead level
+
+def _level(y1: float, y2: float):
+    """Both ends of a one-to-one arrow at the same height when they nearly line up (the ends are tall boxes,
+    so the midpoint still lands inside both)."""
+    if abs(y2 - y1) <= LEVEL_TOL:
+        ym = (y1 + y2) / 2
+        return ym, ym
+    return y1, y2
+
 def straight_arrow(svg_el, x1, y1, x2, y2, stroke_w: float = 2.0, debug_value=None,
                     label_t: float = 0.5, label_side: float = 1.0):
     d = f"M{x1:.2f},{y1:.2f} L{x2:.2f},{y2:.2f}"
@@ -110,6 +120,9 @@ def fan_arrows(svg_el, src_pts, tgt_pts, src_heights, tgt_heights, value_fn):
             label_t  = 0.5 + (t_step / max(n_tgt, 1)) * 0.6
             label_t  = min(max(label_t, 0.15), 0.85)
             label_side = 1.0 if (src_idx + tgt_idx) % 2 == 0 else -1.0
+
+            if n_src == 1 and n_tgt == 1:
+                tail_y, head_y = _level(tail_y, head_y)
 
             straight_arrow(svg_el, sx, tail_y, tx, head_y, stroke_w=1.8,
                            debug_value=value_fn(sid) if value_fn else None,
@@ -178,6 +191,7 @@ def redraw_arrows():
             else:
                 # last layer -> outputs, paired positionally (1st neuron <-> 1st output)
                 for (nx, ny, nid), (ox, oy, oid) in zip(neuron_r_pts, out_l_pts):
+                    ny, oy = _level(ny, oy)
                     straight_arrow(svg_el, nx, ny, ox, oy, stroke_w=2.0,
                                    debug_value=state.output_values.get(oid))
             continue
