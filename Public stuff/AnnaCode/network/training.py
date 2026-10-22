@@ -154,6 +154,7 @@ def add_example(key: str):
         ys = {o["id"]: ex["f"](x) + random.gauss(0, ex["noise"]) for o in state.outputs}
         add_point(xs, ys)
     state.example_key = key
+    state.train_hint_closed = False
     set_status(f"Added {EXAMPLE_POINTS} example points: {ex['label']}.")
 
 # ── Save / load ─────────────────────────────────────────────────────────────
@@ -207,14 +208,16 @@ def save_dataset(evt=None):
     js.URL.revokeObjectURL(url)
     set_status(f"Saved {len(state.training_data)} points.")
 
-def _all_chosen() -> bool:
+def _unchosen() -> list[str]:
+    """The inputs/outputs that still need a device and a value picked."""
+    missing = []
     for kind, items in (("in", state.inputs), ("out", state.outputs)):
-        for it in items:
+        for k, it in enumerate(items):
             dev_el = state.get_id(f"dev-{kind}-{it['id']}")
             chan_el = state.get_id(f"chan-{kind}-{it['id']}")
             if not (dev_el and dev_el.value and chan_el and chan_el.value):
-                return False
-    return True
+                missing.append(f"input ({it['name']})" if kind == "in" else f"output {k + 1}")
+    return missing
 
 async def _record_loop():
     while state.is_recording:
@@ -225,8 +228,10 @@ async def _record_loop():
         await asyncio.sleep(SAMPLE_PERIOD)
 
 def start_recording():
-    if not _all_chosen():
+    missing = _unchosen()
+    if missing:
         set_status("Pick a device and a value for every input and output first.")
+        js.alert("Before you record, choose a device and a value for:\n\n" + "\n".join("  \u2022 " + m for m in missing))
         return
     state.is_recording = True
     btn = state.get_id("record-btn")

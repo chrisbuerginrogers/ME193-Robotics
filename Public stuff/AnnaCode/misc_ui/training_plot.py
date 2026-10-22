@@ -25,6 +25,8 @@ CONFIG = {"displayModeBar": False, "responsive": True}
 STATIC = {"displayModeBar": False, "staticPlot": True, "responsive": True}
 
 _panel_count = 0
+_last_sig = None
+_last_ids = None
 _click_attached = False
 _last_loss_len = -1
 _click_proxy = None
@@ -41,7 +43,7 @@ def _on_selected(ids_json):
     training.remove_points(json.loads(ids_json))
 
 def _redraw_data():
-    global _panel_count, _click_attached, _click_proxy, _select_proxy
+    global _panel_count, _click_attached, _click_proxy, _select_proxy, _last_sig, _last_ids
     el = state.get_id(DATA_ID)
     if not el or not state.inputs or not state.outputs or not state.layers:
         return
@@ -78,6 +80,7 @@ def _redraw_data():
         "showlegend": False,
         "dragmode": "select",
         "hovermode": "closest",
+        "hoverdistance": 25,
         "paper_bgcolor": "rgba(0,0,0,0)",
     }
     for panel, (k, out) in enumerate(outs, start=1):
@@ -99,12 +102,22 @@ def _redraw_data():
     layout[f"xaxis{len(outs) if len(outs) > 1 else ''}"]["title"] = {
         "text": transfer_plot._axis_label("in", inp["id"], inp["name"]), "font": {"size": 13}}
 
+    # Redrawing wipes the hover tag, which made clicks land on nothing. Skip the redraw when nothing changed, and
+    # while the pointer is on the plot unless the points themselves changed (e.g. one was just removed).
+    traces_json, layout_json = json.dumps(traces), json.dumps(layout)
+    sig = traces_json + layout_json
+    if sig == _last_sig:
+        return
+    if Plotly.pointerInside(DATA_ID) and tuple(ids) == _last_ids and len(outs) == _panel_count:
+        return
+    _last_sig, _last_ids = sig, tuple(ids)
+
     el.style.height = f"{len(outs) * PANEL_HEIGHT + 60}px"
     if len(outs) != _panel_count:
         Plotly.purge(DATA_ID)   # drop stale axes (this also drops the click hook)
         _panel_count = len(outs)
         _click_attached = False
-    Plotly.react(DATA_ID, _js(traces), _js(layout), _js(CONFIG))
+    Plotly.react(DATA_ID, js.JSON.parse(traces_json), js.JSON.parse(layout_json), _js(CONFIG))
     if not _click_attached:
         _click_proxy = create_proxy(_on_point_click)
         _select_proxy = create_proxy(_on_selected)
@@ -154,9 +167,9 @@ def redraw():
         rec.disabled = state.example_key is not None and not state.is_recording
     hint = state.get_id("train-hint")
     if hint:
-        shown = state.example_key is not None
+        shown = state.example_key is not None and not state.train_hint_closed
         hint.classList.toggle("hidden", not shown)
         if shown:
-            hint.textContent = training.EXAMPLES[state.example_key]["hint"]
+            state.get_id("train-hint-text").textContent = training.EXAMPLES[state.example_key]["hint"]
     _redraw_data()
     _redraw_loss()

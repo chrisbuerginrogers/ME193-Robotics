@@ -88,8 +88,16 @@ def _on_preset(evt):
     key = evt.target.value
     caption = state.get_id("preset-caption")
     presets.load(key)
-    caption.textContent = presets.PRESETS[key]["caption"] if key else ""
-    caption.classList.toggle("hidden", not key)
+    state.get_id("preset-caption-text").innerHTML = presets.PRESETS[key]["caption"] if key else ""
+    caption.classList.toggle("hidden", not key)   # loading an example always brings the hint back, even if it was closed
+
+@when("click", "#preset-caption-close")
+def _on_caption_close(evt):
+    state.get_id("preset-caption").classList.add("hidden")
+
+@when("click", "#train-hint-close")
+def _on_train_hint_close(evt):
+    state.train_hint_closed = True
 
 @when("click", "#help-close-btn")
 def _on_help_close(evt):

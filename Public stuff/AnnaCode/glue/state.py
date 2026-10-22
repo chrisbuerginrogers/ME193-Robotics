@@ -35,6 +35,7 @@ training_data: list[dict] = []
 data_point_counter = 0
 loss_history: list[float] = []
 undo_stack: list[list[dict]] = []   # batches of removed points, newest last
+train_hint_closed = False   # the student closed the example hint; the next example brings it back
 example_key = None   # which example curve filled the plot (None for recorded data)
 is_recording = False
 is_training = False

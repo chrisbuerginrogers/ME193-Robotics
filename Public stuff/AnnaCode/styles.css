@@ -515,7 +515,7 @@ body {
 
 /* ── Equation oval node ────────────────────────────────────────── */
 .eq-node {
-    width: max(140px, calc(200px * var(--zoom)));
+    width: max(160px, calc(235px * var(--zoom)));
     background: var(--eq-bg);
     border: 2.5px solid var(--eq-border);
     border-radius: calc(60px * var(--zoom));
@@ -532,31 +532,31 @@ body {
     gap: calc(4px * var(--zoom));
     justify-content: center;
     font-family: var(--font-mono);
-    font-size: calc(12px * var(--text-zoom));
+    font-size: calc(15px * var(--text-zoom));
 }
 
 .eq-op {
     color: var(--amber);
     font-weight: 700;
-    font-size: calc(15px * var(--text-zoom));
+    font-size: calc(19px * var(--text-zoom));
     margin: 0 1px;
 }
 .eq-var {
     color: #000;
-    font-size: calc(14px * var(--text-zoom));
+    font-size: calc(17px * var(--text-zoom));
     font-weight: 700;
     margin-right: 2px;
 }
 
 .eq-num-input {
-    width: max(28px, calc(40px * var(--zoom)));
+    width: max(50px, calc(68px * var(--zoom)));
     background: #fff;
     border: 1.5px solid var(--amber-mid);
     border-radius: 6px;
     color: var(--text-primary);
     font-family: var(--font-mono);
-    font-size: calc(11px * var(--text-zoom)); font-weight: 700;
-    padding: calc(3px * var(--zoom)) calc(4px * var(--zoom)); text-align: center;
+    font-size: calc(14px * var(--text-zoom)); font-weight: 700;
+    padding: calc(4px * var(--zoom)) calc(5px * var(--zoom)); text-align: center;
     transition: border-color 0.15s;
     -moz-appearance: textfield;
     appearance: textfield;
@@ -566,14 +566,14 @@ body {
 .eq-num-input:focus { outline: none; border-color: var(--amber); background: var(--amber-light); }
 
 .eq-bias-input {
-    width: max(28px, calc(40px * var(--zoom)));
+    width: max(50px, calc(68px * var(--zoom)));
     background: #fff;
     border: 1.5px solid var(--blue-mid);
     border-radius: 6px;
     color: var(--blue-bright);
     font-family: var(--font-mono);
-    font-size: calc(11px * var(--text-zoom)); font-weight: 700;
-    padding: calc(3px * var(--zoom)) calc(4px * var(--zoom)); text-align: center;
+    font-size: calc(14px * var(--text-zoom)); font-weight: 700;
+    padding: calc(4px * var(--zoom)) calc(5px * var(--zoom)); text-align: center;
     transition: border-color 0.15s;
     -moz-appearance: textfield;
     appearance: textfield;
@@ -931,11 +931,11 @@ body {
 }
 
 /* Beginner-only transfer plot under the run button */
-.network-body { display: flex; align-items: flex-start; gap: 32px; width: fit-content; min-width: 100%; }
+.network-body { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 20px; width: 100%; }   /* the Basic plot drops below the network when there is no room beside it */
 .network-main { flex-shrink: 0; }
-.transfer-card { display: none; justify-content: center; align-self: center; flex: 1 1 360px; min-width: 360px; }
+.transfer-card { display: none; justify-content: center; align-self: center; flex: 1 1 210px; min-width: 210px; }
 .beginner:not(.training) .transfer-card { display: flex; }
-.transfer-plot { width: 100%; max-width: 520px; height: 300px; }
+.transfer-plot { width: 100%; max-width: 430px; height: 250px; }
 /* Greyed out until Run is pressed (play_network adds .running to <body>) */
 .transfer-plot { opacity: 0.3; filter: grayscale(1); transition: opacity 0.2s, filter 0.2s; }
 body.running .transfer-plot { opacity: 1; filter: none; }
@@ -1018,8 +1018,9 @@ body.running .transfer-hint { display: none; }
     cursor: pointer;
 }
 .preset-caption {
-    text-align: center; margin: -6px auto 16px; max-width: 720px;
-    font-size: 13px; color: var(--text-secondary);
+    position: relative; margin: 0 auto 16px; max-width: 720px; padding: 10px 36px 10px 14px;
+    background: var(--purple-light); border: 2px solid var(--purple-mid); border-radius: 12px;
+    font-size: 13px; line-height: 1.5; text-align: center; color: var(--text-primary);
 }
 .preset-caption.hidden { display: none; }
 
@@ -1027,11 +1028,13 @@ body.running .transfer-hint { display: none; }
 .collapse-note:empty { display: none; }
 .collapse-note b { font-family: var(--font-mono); color: var(--text-primary); }
 
-.learn-more {
-    text-align: center; font-size: 13px; color: var(--text-secondary);
-    padding-bottom: 40px;
+.goal-card {
+    display: flex; align-items: baseline; gap: 16px;
+    padding: 14px 28px;
 }
-.learn-more a { font-weight: 700; color: var(--blue-bright); }
+.goal-card p { margin: 0; font-size: 14px; line-height: 1.5; color: var(--text-primary); }
+.goal-card a { font-weight: 700; color: var(--blue-bright); }
+.page-wrap { padding-bottom: 40px; }   /* room above the fixed footer */
 
 /* ── Training mode ────────────────────────────────────────────── */
 .training-card { display: none; margin-top: 28px; }
@@ -1100,7 +1103,7 @@ body.running .transfer-hint { display: none; }
 .train-select:disabled { opacity: 0.4; cursor: default; }
 .train-btn:disabled { opacity: 0.4; cursor: default; }
 .train-hint {
-    margin: 0 0 12px; padding: 10px 14px;
+    position: relative; margin: 0 0 12px; padding: 10px 36px 10px 14px;
     background: var(--purple-light); border: 2px solid var(--purple-mid); border-radius: 12px;
     font-size: 13px; line-height: 1.5; color: var(--text-primary);
 }
@@ -1124,3 +1127,29 @@ body.running .transfer-hint { display: none; }
 .adv-plot-wrap { position: relative; }
 #adv-plot { opacity: 0.3; filter: grayscale(1); transition: opacity 0.2s, filter 0.2s; }
 body.running #adv-plot { opacity: 1; filter: none; }
+
+/* Basic: the narrower output boxes need a slightly smaller big number */
+.beginner:not(.training) .output-node .node-reading { font-size: calc(36px * var(--text-zoom)); }
+
+/* The input's name (x) is drawn on the arrow into the first neuron, so the name field beside the sensor is hidden */
+.cell-label { display: none; }
+
+/* Basic only: narrower input and output boxes, to leave room for the plot */
+.beginner:not(.training) .input-node,
+.beginner:not(.training) .output-node { width: 150px; }
+@media (max-width: 960px) {
+    .beginner:not(.training) .input-node,
+    .beginner:not(.training) .output-node { width: 140px; }
+}
+
+/* Editable names on the arrows (x, n1, ...) */
+.arrow-name {
+    position: absolute; z-index: 6; box-sizing: border-box;
+    height: 24px; padding: 0 3px;
+    text-align: center;
+    font-family: var(--font-mono); font-size: 15px; font-weight: 700; color: #000;
+    background: rgba(255,255,255,0.9);
+    border: 1px solid transparent; border-radius: 6px;
+}
+.arrow-name:hover { border-color: var(--blue-mid); }
+.arrow-name:focus { outline: none; border-color: var(--blue-bright); background: #fff; }

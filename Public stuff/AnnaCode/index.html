@@ -29,6 +29,14 @@
 
     <div class="page-wrap" id="page-wrap" style="display:none">
 
+        <!-- ── Goal card ─────────────────────────────────────────── -->
+        <div class="card goal-card">
+            <span class="connect-title">Goal</span>
+            <p>The goal is to learn how neural nets work. Start with the Example networks, and click the ? buttons for hints. Read
+                <a href="https://app.notion.com/p/A-Neuron-Anna-style-3fa2f91361d380e5804cccee36124bcb" target="_blank" rel="noopener">A Neuron (Anna style)</a>
+                for the full story.</p>
+        </div>
+
         <!-- ── Connection card ───────────────────────────────────── -->
         <div class="card connect-card">
             <div class="connect-header">
@@ -63,7 +71,10 @@
                 </div>
             </div>
 
-            <div class="preset-caption hidden" id="preset-caption"></div>
+            <div class="preset-caption hidden" id="preset-caption">
+                <span id="preset-caption-text"></span>
+                <button class="hint-close" id="preset-caption-close" title="Close this hint">&times;</button>
+            </div>
             <div class="hint-banner hidden" id="hint-banner">
                 <span id="hint-text"></span>
                 <button class="hint-close" id="hint-close-btn" title="Dismiss">&times;</button>
@@ -164,7 +175,10 @@
                 </div>
                 <div class="train-status"><span id="train-status">Pick a device and a value for each input and output, press Record, and push the robot through its paces.</span>
                     <button class="help-btn inline" data-help="dataplot" title="Help">?</button></div>
-                <div class="train-hint hidden" id="train-hint"></div>
+                <div class="train-hint hidden" id="train-hint">
+                    <span id="train-hint-text"></span>
+                    <button class="hint-close" id="train-hint-close" title="Close this hint">&times;</button>
+                </div>
                 <div class="training-plots">
                     <div class="train-plot-wrap"><div id="train-data-plot"></div></div>
                     <div class="train-plot-wrap train-loss-wrap"><div class="train-plot-title">Loss <button class="help-btn inline" data-help="loss" title="Help">?</button></div><div id="train-loss-plot"></div></div>
@@ -187,10 +201,6 @@
             </div>
 
         </div>
-
-        <p class="learn-more">New to neurons? Read
-            <a href="https://app.notion.com/p/A-Neuron-Anna-style-3fa2f91361d380e5804cccee36124bcb" target="_blank" rel="noopener">A Neuron (Anna style)</a>
-            for the full story.</p>
 
     </div>
 

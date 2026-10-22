@@ -14,19 +14,19 @@ import arrows
 PRESETS = {
     "first": {
         "label": "A first neuron: y = 2x + 20",
-        "caption": "One neuron: multiply the sensor reading by 2, then add 20.",
+        "caption": "This is one neuron that multiplies the sensor reading by 2 and then adds 20, assuming you have a Color Sensor as the input (set to <b>Reflection</b>) and a Double Motor as the output (set to <b>BothSpeed</b>). Change the numbers to see how the motor speed changes.",
         "n_in": 1, "n_out": 1,
         "layers": [[{"w": [2.0], "b": 20.0}]],
     },
     "wall": {
         "label": "Stop at the wall",
-        "caption": "Output = 25 - sensor, so when the sensor reads exactly 25 the car stops.",
+        "caption": "This stops at the wall: the output is 25 minus the sensor reading, so the car stops when the sensor reads exactly 25. It assumes you have a Color Sensor as the input (set to <b>Reflection</b>) and a Double Motor as the output (set to <b>BothSpeed</b>). Change the 25 if it does not stop where you want.",
         "n_in": 1, "n_out": 1,
         "layers": [[{"w": [-1.0], "b": 25.0}]],
     },
     "motors": {
         "label": "Each motor separately",
-        "caption": "Note the opposite signs on the two neurons, so the motors go the same direction.",
+        "caption": "This controls each motor separately, assuming you have a Color Sensor as the input (set to <b>Reflection</b>) and a Double Motor as the outputs (one is <b>LeftSpeed</b> and the other is <b>RightSpeed</b>). Note the opposite signs on the two neurons, so the motors go the same direction.",
         "n_in": 1, "n_out": 2,
         "layers": [
             [{"w": [1.0], "b": -10.0}],
@@ -35,7 +35,7 @@ PRESETS = {
     },
     "line": {
         "label": "Follow a line",
-        "caption": "Subtract 75 from the sensor reading, scale it by -0.2, then add -10 to one motor and +10 to the other. Try the Debug switch.",
+        "caption": "This follows a line, assuming you have a Color Sensor as the input (set to <b>Reflection</b>) and a Double Motor as the outputs (one is <b>LeftSpeed</b> and the other is <b>RightSpeed</b>). Change the weights if it is not following well.",
         "n_in": 1, "n_out": 2,
         "layers": [
             [{"w": [1.0], "b": -75.0}],

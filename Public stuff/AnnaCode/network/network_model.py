@@ -40,7 +40,7 @@ def get_source_labels(layer_idx: int) -> list[str]:
     """Display labels for each weight term in this layer's equations."""
     if layer_idx == 0:
         return [inp["name"] for inp in state.inputs]
-    return [f"n{idx + 1}" for idx in range(len(state.layers[layer_idx - 1]["neurons"]))]
+    return [n.get("name") or f"n{k + 1}" for k, n in enumerate(state.layers[layer_idx - 1]["neurons"])]
 
 def evaluate_layers(input_vals: list[float]) -> list[list[tuple[float, float]]]:
     """Pure forward pass (no state/device side effects): for every layer, a

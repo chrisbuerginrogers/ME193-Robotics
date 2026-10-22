@@ -85,6 +85,9 @@ def redraw_beginner():
         "showlegend": False,
         "paper_bgcolor": "rgba(0,0,0,0)",
     }
+    box = state.get_id(PLOT_ID)   # the slot can change size (e.g. a wider network); Plotly won't notice by itself
+    if box.clientWidth:
+        layout["width"], layout["height"] = box.clientWidth, box.clientHeight
     Plotly.react(PLOT_ID, _js(traces), _js(layout), _js(CONFIG))
 
 # ── Advanced ─────────────────────────────────────────────────────────────────
