@@ -11,6 +11,7 @@ from pyscript.ffi import create_proxy
 from pyscript.js_modules import Plotly
 
 import state
+import arrows
 import network_model
 import transfer_plot
 import training
@@ -126,12 +127,36 @@ def _redraw_loss():
     }
     Plotly.react(LOSS_ID, _js(traces), _js(layout), _js(STATIC))
 
+def _debug_preview():
+    """Debug arrows show live values even when the network isn't Running (Run would drive the motors)."""
+    if state.debug_mode and not state.is_running and state.inputs and state.layers and state.outputs:
+        network_model.preview_forward()
+        arrows.redraw_arrows()
+
 def redraw():
+    _debug_preview()
     count = state.get_id("train-count")
     if count:
         count.textContent = f"{len(state.training_data)} points"
     undo_btn = state.get_id("undo-btn")
     if undo_btn:
         undo_btn.disabled = not state.undo_stack
+    # Either Record or an example curve, not both: each greys out the other while there is data
+    if not state.training_data:
+        state.example_key = None
+    sel = state.get_id("example-select")
+    if sel:
+        sel.disabled = bool(state.training_data) or state.is_recording
+        if state.example_key is None:
+            sel.value = ""
+    rec = state.get_id("record-btn")
+    if rec:
+        rec.disabled = state.example_key is not None and not state.is_recording
+    hint = state.get_id("train-hint")
+    if hint:
+        shown = state.example_key is not None
+        hint.classList.toggle("hidden", not shown)
+        if shown:
+            hint.textContent = training.EXAMPLES[state.example_key]["hint"]
     _redraw_data()
     _redraw_loss()

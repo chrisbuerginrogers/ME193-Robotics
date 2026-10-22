@@ -63,10 +63,15 @@ def redraw_beginner():
         vals = network_model.evaluate([x] + base[1:])
         return vals[0] if vals else 0.0
 
+    x_now = base[0]
+    y_now = y_at(x_now)
+    guide = {"color": "#dc2626", "width": 1}   # thin red lines from the current point to the axes
     traces = [
         {"x": xs, "y": [y_at(x) for x in xs], "mode": "lines",
          "line": {"color": LINE_COLOR, "width": 3}, "hoverinfo": "skip"},
-        {"x": [base[0]], "y": [y_at(base[0])], "mode": "markers",
+        {"x": [x_now, x_now], "y": [0, y_now], "mode": "lines", "line": guide, "hoverinfo": "skip"},
+        {"x": [0, x_now], "y": [y_now, y_now], "mode": "lines", "line": guide, "hoverinfo": "skip"},
+        {"x": [x_now], "y": [y_now], "mode": "markers",
          "marker": {"color": "#1a1d2e", "size": 10}, "hoverinfo": "skip"},
     ]
     layout = {

@@ -68,8 +68,8 @@ def evaluate(input_vals: list[float]) -> list[float]:
 
 _last_result = {}   # last int result per output id, to log sudden jumps
 
-def forward():
-    # 1. Collect input values.
+def read_inputs():
+    # Collect input values.
     # Pragmatic exception: reads the device/channel <select> elements directly
     # rather than going through a rendering module, and calls into Device I/O
     # below -- keeping the DOM read + device call co-located here avoids
@@ -87,7 +87,8 @@ def forward():
             val = 0.0
         state.input_values[iid] = val
 
-    # 2. Forward-propagate through every layer in order
+def propagate():
+    """Forward-propagate state.input_values through every layer (no device output)."""
     source_values = [state.input_values.get(inp["id"], 0.0) for inp in state.inputs]
     for layer in state.layers:
         act_fn = layer["act_fn"]
@@ -106,6 +107,19 @@ def forward():
             state.neuron_post_values[nid] = post_act
             next_source_values.append(post_act)
         source_values = next_source_values
+
+def preview_forward():
+    """Live values on the arrows without driving any output (Training mode, while the robot is pushed by hand)."""
+    read_inputs()
+    propagate()
+    last = state.layers[-1]["neurons"] if state.layers else []
+    for idx, out in enumerate(state.outputs):
+        n = last[idx] if idx < len(last) else None
+        state.output_values[out["id"]] = state.neuron_post_values.get(n["id"], 0.0) if n else 0.0
+
+def forward():
+    read_inputs()
+    propagate()
 
     # 3. Route each output from the last layer's neuron at the same position
     last_layer_neurons = state.layers[-1]["neurons"] if state.layers else []

@@ -25,13 +25,17 @@ all_plots: dict[str, object] = {}
 
 debug_mode = True
 mode = "beginner"      # "beginner" | "advanced" | "training"
-beginner_mode = True    # True (Beginner and Training) hides the activation blocks and ignores activations
+beginner_mode = True    # True (Beginner and Training) uses the simplified layout
+use_activations = False       # Beginner ignores activations; Advanced and Training apply them
+show_activation_blocks = False   # whether the activation columns are on screen (Advanced always; Training via its toggle)
+show_activation = False       # Training mode's "+ Activation layers" toggle
 
 # Training mode: recorded samples [{"id", "xs": {input id: v}, "ys": {output id: v}}], loss per epoch
 training_data: list[dict] = []
 data_point_counter = 0
 loss_history: list[float] = []
 undo_stack: list[list[dict]] = []   # batches of removed points, newest last
+example_key = None   # which example curve filled the plot (None for recorded data)
 is_recording = False
 is_training = False
 

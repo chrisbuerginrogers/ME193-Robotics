@@ -1077,3 +1077,45 @@ body.running .transfer-hint { display: none; }
     border-top: 1px solid #e6d8c3;
     border-radius: 0 0 var(--card-radius) var(--card-radius);
 }
+
+/* Training mode: "+ Activation layers" reveals the activation blocks and the layer/neuron controls */
+.act-toggle-btn {
+    display: none;
+    padding: 6px 14px; border-radius: 99px;
+    background: var(--purple-light); border: 2px solid var(--purple-mid); color: var(--purple);
+    font-family: var(--font-ui); font-size: 12px; font-weight: 700; cursor: pointer;
+}
+.training .act-toggle-btn { display: inline-block; }
+.training.show-act .col-activation,
+.training.show-act .col-add-layer { display: flex !important; }
+.training.show-act .btn-add-col { display: inline-flex !important; }
+.training.show-act .item-delete-btn:not(.item-delete-hidden) { display: flex !important; }
+
+.train-or { font-size: 12px; font-weight: 700; color: var(--text-muted); }
+.train-select {
+    padding: 6px 12px; border-radius: 99px;
+    border: 2px solid var(--blue-mid); background: var(--blue-light); color: var(--blue-bright);
+    font-family: var(--font-ui); font-size: 12px; font-weight: 700; cursor: pointer;
+}
+.train-select:disabled { opacity: 0.4; cursor: default; }
+.train-btn:disabled { opacity: 0.4; cursor: default; }
+.train-hint {
+    margin: 0 0 12px; padding: 10px 14px;
+    background: var(--purple-light); border: 2px solid var(--purple-mid); border-radius: 12px;
+    font-size: 13px; line-height: 1.5; color: var(--text-primary);
+}
+.train-hint.hidden { display: none; }
+
+/* Training mode shows the Debug switch all the time (not just while Running), so values show as the robot is pushed by hand */
+.training .debug-toggle.hidden { display: flex !important; }
+
+/* Training mode: live plots in the input/output boxes (as in Advanced) instead of the big number */
+.training .node-plot { position: static; visibility: visible; width: auto; pointer-events: auto; }
+.training .node-header {
+    flex-direction: row; align-items: center; gap: 6px;
+    border-bottom: 1.5px solid rgba(0,0,0,0.06); padding-bottom: 5px;
+}
+.training .node-reading {
+    margin-top: 0; padding: 0; min-width: 40px; text-align: right;
+    font-size: 9px; letter-spacing: 0.05em; color: var(--text-muted);
+}

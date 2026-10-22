@@ -54,6 +54,7 @@
                     <button class="mode-btn" id="mode-advanced-btn">Advanced</button>
                     <button class="mode-btn" id="mode-training-btn">Training</button>
                 </div>
+                <button class="act-toggle-btn" id="show-activation-btn" data-tip="act_toggle">+ Activation layers</button>
                 <select class="preset-select" id="preset-select" title="Load a worked example"></select>
                 <div class="zoom-control" title="Zoom the network diagram">
                     <button class="btn-zoom" id="zoom-out-btn" title="Zoom out">&minus;</button>
@@ -142,7 +143,9 @@
 
             <div class="training-card" id="training-card">
                 <div class="training-bar">
-                    <span class="train-group"><button class="train-btn" id="record-btn" data-tip="record">Record</button></span>
+                    <span class="train-group"><select class="train-select" id="example-select" data-tip="example"></select>
+                        <span class="train-or">or</span>
+                        <button class="train-btn" id="record-btn" data-tip="record">Record</button></span>
                     <span class="train-group"><button class="train-btn" id="undo-btn" data-tip="undo" disabled>Undo</button></span>
                     <span class="train-group"><button class="train-btn" id="remove-zero-btn" data-tip="remove_zero">Remove zero-speed points</button></span>
                     <span class="train-group"><button class="train-btn" id="clear-data-btn" data-tip="clear">Clear</button></span>
@@ -151,6 +154,7 @@
                     <input type="file" id="load-file" accept=".json,application/json" hidden />
                 </div>
                 <div class="training-bar">
+                    <span class="train-group"><button class="train-btn" id="randomize-btn" data-tip="randomize">Randomize weights</button></span>
                     <span class="train-group"><button class="train-btn train-accent" id="step-btn" data-tip="step">Step</button></span>
                     <span class="train-group"><button class="train-btn train-accent" id="train-btn" data-tip="train">Train 50 epochs</button></span>
                     <span class="train-group"><label class="train-lr" data-tip="lr">Learning rate
@@ -160,6 +164,7 @@
                 </div>
                 <div class="train-status"><span id="train-status">Pick a device and a value for each input and output, press Record, and push the robot through its paces.</span>
                     <button class="help-btn inline" data-help="dataplot" title="Help">?</button></div>
+                <div class="train-hint hidden" id="train-hint"></div>
                 <div class="training-plots">
                     <div class="train-plot-wrap"><div id="train-data-plot"></div></div>
                     <div class="train-plot-wrap train-loss-wrap"><div class="train-plot-title">Loss <button class="help-btn inline" data-help="loss" title="Help">?</button></div><div id="train-loss-plot"></div></div>

@@ -169,7 +169,7 @@ def redraw_arrows():
         neuron_l_pts, neuron_r_pts, neuron_heights = _anchor_points("cell-neuron-", layer["neurons"])
         if not neuron_l_pts:
             return
-        if state.beginner_mode:
+        if not state.show_activation_blocks:
             # Activation blocks are hidden: neurons connect straight on
             if idx + 1 < len(state.layers):
                 next_l_pts, _, next_heights = _anchor_points("cell-neuron-", state.layers[idx + 1]["neurons"])

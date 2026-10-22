@@ -45,7 +45,7 @@ PRESETS = {
 }
 
 def populate_select(sel):
-    sel.innerHTML = '<option value="">Examples…</option>' + "".join(
+    sel.innerHTML = '<option value="">Example networks…</option>' + "".join(
         f'<option value="{key}">{p["label"]}</option>' for key, p in PRESETS.items())
 
 def load(key: str):

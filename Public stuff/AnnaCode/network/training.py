@@ -3,22 +3,24 @@ AnnaCode — training.py
 
 Training mode: record (input, output) samples from the hardware while the
 student pushes the robot around, clean the data up, then fit the network to it
-with backprop. Training mode ignores activations (like Beginner), so every
-neuron is a plain weighted sum and the activation derivative is 1.
-
-Training happens in normalized space (stable gradients); the weights are folded
-back into raw units after every epoch, so the displayed numbers, the fit line
-and Run all see ordinary weights and biases.
+with backprop. Activations are honoured (shown or hidden by the Training toggle), so students can see what
+they change. Training happens in normalized space (stable gradients); the weights are folded
+back into raw units after every epoch, so the displayed numbers, the fit line and Run all see
+ordinary weights and biases. If the last layer has an activation, the targets are left in raw
+units (a y-scale cannot be folded through a non-linear output).
 """
 import asyncio
 import json
 import math
+
+import random
 
 import js
 
 import state
 import Device
 import sync
+import activations
 
 SAMPLE_PERIOD = 0.1   # seconds between recorded samples
 EPOCH_PAUSE = 0.03    # lets the plots repaint between epochs
@@ -83,6 +85,76 @@ def undo(evt=None):
     state.training_data.extend(batch)
     state.training_data.sort(key=lambda p: p["id"])   # ids grow with recording order
     set_status(f"Restored {len(batch)} point{'s' if len(batch) != 1 else ''}.")
+
+# ── Example data ────────────────────────────────────────────────────────────
+
+EXAMPLE_POINTS = 120
+X_MIN, X_MAX = 20.0, 100.0   # like a reflection reading
+
+def _frac(v: float) -> float:
+    return v - math.floor(v)
+
+# key -> label, curve f(x), noise, and the hint on how to shape the network
+EXAMPLES = {
+    "linear": {
+        "label": "Linear",
+        "f": lambda x: 2 * x - 100, "noise": 3.0,
+        "hint": "A straight line needs no hidden layer and no activation: one neuron (weight about 2, bias about -100) is enough.",
+    },
+    "v": {
+        "label": "V",
+        "f": lambda x: 2 * abs(x - 60), "noise": 2.0,
+        "hint": "A V is two ramps: add a hidden layer with at least 2 neurons and ReLU, and leave the output layer's activation as None. "
+                "Then Randomize weights and press Train a few times.",
+    },
+    "parabola": {
+        "label": "Parabola",
+        "f": lambda x: 0.04 * (x - 60) ** 2, "noise": 2.0,
+        "hint": "A smooth curve: try a hidden layer of 3-4 neurons with ReLU (it builds the curve from straight pieces), "
+                "or Tanh or Softplus for a smoother fit. Keep the output layer's activation as None.",
+    },
+    "step": {
+        "label": "Step (on/off)",
+        "f": lambda x: 0.0 if x < 60 else 80.0, "noise": 3.0,
+        "hint": "A switch: a hidden layer of 2 neurons with Sigmoid (or Tanh) makes an S-shaped jump. The jump needs big weights, "
+                "so raise the learning rate to about 0.3 and train a few hundred epochs. Keep the output layer's activation as None.",
+    },
+    "bump": {
+        "label": "Bump",
+        "f": lambda x: 80 * math.exp(-((x - 60) / 12) ** 2), "noise": 2.0,
+        "hint": "A single hill: a hidden layer of 3 neurons with Tanh (or Sigmoid) can build it. "
+                "Keep the output layer's activation as None.",
+    },
+    "sine": {
+        "label": "Sine wave",
+        "f": lambda x: 50 * math.sin(2 * math.pi * (x - 20) / 80), "noise": 2.0,
+        "hint": "A smooth wave with a hill and a valley: use a hidden layer of 4 or more neurons with Tanh. More neurons fit it better. "
+                "Keep the output layer's activation as None and train for a few hundred epochs.",
+    },
+    "sawtooth": {
+        "label": "Sawtooth",
+        "f": lambda x: 80 * _frac((x - 20) / 40) - 40, "noise": 2.0,
+        "hint": "Ramps with sudden drops: use a hidden layer of about 10 ReLU neurons and keep pressing Train 50 epochs (it needs 1000 or more). "
+                "The drops will stay slightly slanted, because a smooth network never makes them perfectly vertical.",
+    },
+}
+
+def populate_examples(sel):
+    sel.innerHTML = '<option value="">Example data…</option>' + "".join(
+        f'<option value="{k}">{e["label"]}</option>' for k, e in EXAMPLES.items())
+
+def add_example(key: str):
+    """Fill the plot with a noisy example curve. Only while there is no data (it is Record or an example, not both)."""
+    ex = EXAMPLES.get(key)
+    if not ex or state.training_data or not state.inputs or not state.outputs:
+        return
+    for _ in range(EXAMPLE_POINTS):
+        x = random.uniform(X_MIN, X_MAX)
+        xs = {i["id"]: (x if k == 0 else random.uniform(X_MIN, X_MAX)) for k, i in enumerate(state.inputs)}
+        ys = {o["id"]: ex["f"](x) + random.gauss(0, ex["noise"]) for o in state.outputs}
+        add_point(xs, ys)
+    state.example_key = key
+    set_status(f"Added {EXAMPLE_POINTS} example points: {ex['label']}.")
 
 # ── Save / load ─────────────────────────────────────────────────────────────
 
@@ -228,13 +300,20 @@ def _clip(v: float) -> float:
     return max(-MAX_GRAD_NORM, min(MAX_GRAD_NORM, v))
 
 def _forward(xs: list[float]):
-    """Linear forward pass; returns (final outputs, the source values that fed each layer)."""
-    sources, vals = [], list(xs)
+    """Forward pass keeping what backprop needs: (outputs, sources per layer, pre- and post-activations per layer)."""
+    sources, pres, posts, vals = [], [], [], list(xs)
     for layer in state.layers:
         sources.append(vals)
-        vals = [sum(n["weights"][i] * vals[i] for i in range(min(len(n["weights"]), len(vals)))) + n["bias"]
-                for n in layer["neurons"]]
-    return vals, sources
+        pre = [sum(n["weights"][i] * vals[i] for i in range(min(len(n["weights"]), len(vals)))) + n["bias"]
+               for n in layer["neurons"]]
+        vals = [activations.apply_activation(p, layer["act_fn"], layer["custom_activation"]) for p in pre]
+        pres.append(pre)
+        posts.append(vals)
+    return vals, sources, pres, posts
+
+def _deriv(li: int, i: int, pres, posts) -> float:
+    layer = state.layers[li]
+    return activations.apply_activation_derivative(pres[li][i], posts[li][i], layer["act_fn"], layer["custom_activation"])
 
 def _train_epoch(lr: float, x_stats, y_stats) -> float:
     """One pass over the data, one averaged update per weight. Returns the mean squared error
@@ -247,7 +326,7 @@ def _train_epoch(lr: float, x_stats, y_stats) -> float:
 
     for p in state.training_data:
         xs = [(p["xs"].get(iid, 0.0) - x_stats[iid][0]) / x_stats[iid][1] for iid in in_ids]
-        final, sources = _forward(xs)
+        final, sources, pres, posts = _forward(xs)
         deltas = [0.0] * len(final)
         for k, oid in enumerate(out_ids):
             if k >= len(final):
@@ -255,7 +334,7 @@ def _train_epoch(lr: float, x_stats, y_stats) -> float:
             err = final[k] - (p["ys"].get(oid, 0.0) - y_stats[oid][0]) / y_stats[oid][1]
             total += err ** 2
             terms += 1
-            deltas[k] = 2.0 * err
+            deltas[k] = 2.0 * err * _deriv(len(state.layers) - 1, k, pres, posts)
         for li in reversed(range(len(state.layers))):
             neurons = state.layers[li]["neurons"]
             src = sources[li]
@@ -266,7 +345,8 @@ def _train_epoch(lr: float, x_stats, y_stats) -> float:
                     w_grads[li][i][j] += d * src[j]
                     back[j] += d * n["weights"][j]
                 b_grads[li][i] += d
-            deltas = back
+            if li > 0:
+                deltas = [back[i] * _deriv(li - 1, i, pres, posts) for i in range(len(back))]
 
     count = len(state.training_data)
     for li, layer in enumerate(state.layers):
@@ -274,6 +354,47 @@ def _train_epoch(lr: float, x_stats, y_stats) -> float:
             n["weights"] = [w - lr * _clip(g / count) for w, g in zip(n["weights"], w_grads[li][i])]
             n["bias"] -= lr * _clip(b_grads[li][i] / count)
     return total / terms if terms else 0.0
+
+def _stats_for_training():
+    """Dataset stats, with the y-scale switched off when the last layer has an activation."""
+    x_stats, y_stats = _dataset_stats()
+    if state.layers and state.layers[-1]["act_fn"] not in ("", None):
+        y_stats = {oid: (0.0, 1.0) for oid in y_stats}
+    return x_stats, y_stats
+
+def _rebuild_equations():
+    for idx in range(len(state.layers)):
+        sync.rebuild_layer_eq_html(idx)
+
+def _randomize(layer_indices):
+    """Small random weights (and zero bias) for the given layers, leaving the others' behaviour unchanged."""
+    x_stats, y_stats = _stats_for_training()
+    _to_normalized(x_stats, y_stats)
+    for li in layer_indices:
+        for n in state.layers[li]["neurons"]:
+            fan_in = max(1, len(n["weights"]))
+            n["weights"] = [random.uniform(-1.0, 1.0) / math.sqrt(fan_in) for _ in n["weights"]]
+            n["bias"] = 0.0
+    _to_raw(x_stats, y_stats)
+    _rebuild_equations()
+
+def randomize_weights(evt=None):
+    if state.is_training or not state.layers:
+        return
+    _randomize(range(len(state.layers)))
+    state.loss_history.clear()
+    set_status("Weights randomized. Press Train to start from here.")
+
+def _hidden_layers_symmetric() -> bool:
+    """Identical neurons in a hidden layer get identical gradients, so they would never learn different things."""
+    for layer in state.layers[:-1]:
+        seen = set()
+        for n in layer["neurons"]:
+            key = (tuple(round(w, 9) for w in n["weights"]), round(n["bias"], 9))
+            if key in seen:
+                return True
+            seen.add(key)
+    return False
 
 def get_learning_rate() -> float:
     el = state.get_id("train-lr")
@@ -290,15 +411,18 @@ async def train(epochs: int):
         return
     state.is_training = True
     lr = get_learning_rate()
-    x_stats, y_stats = _dataset_stats()
-    set_status("Training…")
+    if _hidden_layers_symmetric():
+        _randomize(range(len(state.layers) - 1))
+        set_status("Randomized the hidden layer(s) so their neurons can learn different things. Training…")
+    else:
+        set_status("Training…")
+    x_stats, y_stats = _stats_for_training()
     for _ in range(epochs):
         _to_normalized(x_stats, y_stats)
         loss = _train_epoch(lr, x_stats, y_stats)
         _to_raw(x_stats, y_stats)
         state.loss_history.append(loss)
-        for idx in range(len(state.layers)):
-            sync.rebuild_layer_eq_html(idx)
+        _rebuild_equations()
         await asyncio.sleep(EPOCH_PAUSE)
     state.is_training = False
     set_status(f"Trained {epochs} epoch{'s' if epochs != 1 else ''}. Loss {state.loss_history[-1]:.3f}")

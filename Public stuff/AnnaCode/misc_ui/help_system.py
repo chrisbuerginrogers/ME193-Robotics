@@ -50,6 +50,12 @@ HELP.update({
     "save": ("Downloads the recorded points as a file so you can keep a good run or share it.", ""),
     "load": ("Adds the points from a saved file to the ones you have. The file needs the same number of inputs and outputs "
              "as your network. Press Clear first to replace instead of add.", ""),
+    "example": ("Fills the plot with a noisy example curve (a line, V, sine wave and more) to practise on. It is either this "
+                "or Record: it is only available while there is no data. A hint below tells you how to shape the network.", ""),
+    "randomize": ("Resets every weight and bias to small random numbers and clears the loss plot, so you can train from scratch.", ""),
+    "act_toggle": ("Show or hide the activation functions and the layer and neuron controls. Activations are applied "
+                   "whether or not they are visible; the label lists any that are on while hidden. An activation lets the "
+                   "line bend, so compare the fit with and without one.", ""),
     "step": ("One pass over all your points, nudging the weight and bias a little to shrink the error.", ""),
     "train": ("Fifty passes in a row. Watch the yellow line move toward the dots and the loss curve fall.", ""),
     "lr": ("How big each nudge is. Too small and it learns slowly; too big and the loss bounces or grows. "

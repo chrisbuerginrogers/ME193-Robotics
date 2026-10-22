@@ -99,18 +99,44 @@ def _on_help_close(evt):
 def _on_hint_close(evt):
     help_system.close_hint()
 
+def update_activation_toggle():
+    """Label for the Training-mode toggle; when hidden, still says which activations are active."""
+    btn = state.get_id("show-activation-btn")
+    names = dict((v, k) for k, v in state.ACTIVATION_OPTIONS)
+    active = sorted({names.get(l["act_fn"], l["act_fn"]) for l in state.layers if l["act_fn"]})
+    if state.show_activation:
+        btn.textContent = "− Activation layers"
+    else:
+        btn.textContent = "+ Activation layers" + (f" (on: {', '.join(active)})" if active else "")
+
+@when("click", "#show-activation-btn")
+def _on_toggle_activation(evt):
+    state.show_activation = not state.show_activation
+    set_mode(state.mode)
+
+@when("click", "#randomize-btn")
+def _on_randomize(evt):
+    training.randomize_weights()
+
 def set_mode(mode: str):
     state.mode = mode
-    state.beginner_mode = mode != "advanced"   # Beginner and Training hide the activations and ignore them
+    state.beginner_mode = mode != "advanced"           # Beginner and Training use the simplified layout
+    state.use_activations = mode != "beginner"         # Beginner ignores activations; the others apply them
+    state.show_activation_blocks = mode == "advanced" or (mode == "training" and state.show_activation)
     wrap = state.get_id("page-wrap")
     wrap.classList.toggle("beginner", state.beginner_mode)
     wrap.classList.toggle("training", mode == "training")
+    wrap.classList.toggle("show-act", mode == "training" and state.show_activation)
+    update_activation_toggle()
     for m in ("beginner", "advanced", "training"):
         state.get_id(f"mode-{m}-btn").classList.toggle("active", m == mode)
     if mode == "training":
         network_actions.match_last_layer_to_outputs()
     else:
         training.stop_recording()
+        if not state.is_running:   # drop the live-preview numbers so they don't linger on the arrows
+            for d in (state.input_values, state.neuron_pre_values, state.neuron_post_values, state.output_values):
+                d.clear()
     # Layout changed (columns hidden/shown) -- re-measure the arrows
     arrows.schedule_redraw()
 
@@ -137,6 +163,10 @@ def _on_remove_zero(evt):
 @when("click", "#clear-data-btn")
 def _on_clear_data(evt):
     training.clear_data()
+
+@when("change", "#example-select")
+def _on_example(evt):
+    training.add_example(evt.target.value)
 
 @when("click", "#undo-btn")
 def _on_undo(evt):
@@ -177,6 +207,7 @@ def boot():
     network_actions.add_output()
 
     presets.populate_select(state.get_id("preset-select"))
+    training.populate_examples(state.get_id("example-select"))
     help_system.setup()
     set_mode(state.mode)
     asyncio.ensure_future(transfer_plot.run_loop())

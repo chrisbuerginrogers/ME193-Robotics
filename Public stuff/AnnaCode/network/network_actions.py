@@ -177,6 +177,8 @@ def add_layer(evt=None):
     bindings.bind_layer_static_events(layer)
 
     add_neuron(lid)   # every layer starts with exactly one neuron
+    if state.mode == "training":
+        match_last_layer_to_outputs()
 
     sync.update_neuron_usage_state()
     arrows.schedule_redraw(80)
