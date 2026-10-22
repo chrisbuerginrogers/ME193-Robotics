@@ -35,6 +35,7 @@ import zoom
 import transfer_plot
 import help_system
 import presets
+import training
 import asyncio
 
 # ── Static wiring ──────────────────────────────────────────────────────────────
@@ -98,21 +99,71 @@ def _on_help_close(evt):
 def _on_hint_close(evt):
     help_system.close_hint()
 
-def set_mode(beginner: bool):
-    state.beginner_mode = beginner
-    state.get_id("page-wrap").classList.toggle("beginner", beginner)
-    state.get_id("mode-beginner-btn").classList.toggle("active", beginner)
-    state.get_id("mode-advanced-btn").classList.toggle("active", not beginner)
+def set_mode(mode: str):
+    state.mode = mode
+    state.beginner_mode = mode != "advanced"   # Beginner and Training hide the activations and ignore them
+    wrap = state.get_id("page-wrap")
+    wrap.classList.toggle("beginner", state.beginner_mode)
+    wrap.classList.toggle("training", mode == "training")
+    for m in ("beginner", "advanced", "training"):
+        state.get_id(f"mode-{m}-btn").classList.toggle("active", m == mode)
+    if mode == "training":
+        network_actions.match_last_layer_to_outputs()
+    else:
+        training.stop_recording()
     # Layout changed (columns hidden/shown) -- re-measure the arrows
     arrows.schedule_redraw()
 
 @when("click", "#mode-beginner-btn")
 def _on_mode_beginner(evt):
-    set_mode(True)
+    set_mode("beginner")
 
 @when("click", "#mode-advanced-btn")
 def _on_mode_advanced(evt):
-    set_mode(False)
+    set_mode("advanced")
+
+@when("click", "#mode-training-btn")
+def _on_mode_training(evt):
+    set_mode("training")
+
+@when("click", "#record-btn")
+def _on_record(evt):
+    training.toggle_recording()
+
+@when("click", "#remove-zero-btn")
+def _on_remove_zero(evt):
+    training.remove_zero_points()
+
+@when("click", "#clear-data-btn")
+def _on_clear_data(evt):
+    training.clear_data()
+
+@when("click", "#undo-btn")
+def _on_undo(evt):
+    training.undo()
+
+@when("click", "#save-data-btn")
+def _on_save(evt):
+    training.save_dataset()
+
+@when("click", "#load-data-btn")
+def _on_load_click(evt):
+    state.get_id("load-file").click()
+
+@when("change", "#load-file")
+async def _on_load_file(evt):
+    file = evt.target.files.item(0)
+    if file:
+        training.load_dataset(await file.text())
+    evt.target.value = ""   # so the same file can be loaded again
+
+@when("click", "#step-btn")
+async def _on_step(evt):
+    await training.train(1)
+
+@when("click", "#train-btn")
+async def _on_train(evt):
+    await training.train(50)
 
 # ── Boot ───────────────────────────────────────────────────────────────────────
 
@@ -127,7 +178,7 @@ def boot():
 
     presets.populate_select(state.get_id("preset-select"))
     help_system.setup()
-    set_mode(state.beginner_mode)
+    set_mode(state.mode)
     asyncio.ensure_future(transfer_plot.run_loop())
     zoom.apply_zoom()
     zoom.setup_resize_observer()

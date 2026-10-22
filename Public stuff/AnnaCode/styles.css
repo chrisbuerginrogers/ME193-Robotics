@@ -934,7 +934,7 @@ body {
 .network-body { display: flex; align-items: flex-start; gap: 32px; width: fit-content; min-width: 100%; }
 .network-main { flex-shrink: 0; }
 .transfer-card { display: none; justify-content: center; align-self: center; flex: 1 1 360px; min-width: 360px; }
-.beginner .transfer-card { display: flex; }
+.beginner:not(.training) .transfer-card { display: flex; }
 .transfer-plot { width: 100%; max-width: 520px; height: 300px; }
 /* Greyed out until Run is pressed (play_network adds .running to <body>) */
 .transfer-plot { opacity: 0.3; filter: grayscale(1); transition: opacity 0.2s, filter 0.2s; }
@@ -1032,3 +1032,48 @@ body.running .transfer-hint { display: none; }
     padding-bottom: 40px;
 }
 .learn-more a { font-weight: 700; color: var(--blue-bright); }
+
+/* ── Training mode ────────────────────────────────────────────── */
+.training-card { display: none; margin-top: 28px; }
+.training .training-card { display: block; }
+.training #add-input-btn,
+.training #add-output-btn { display: inline-flex !important; }
+.training .node-card .item-delete-btn:not(.item-delete-hidden) { display: flex !important; }
+
+.training-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding-bottom: 8px; }
+.train-btn {
+    padding: 7px 16px; border-radius: 99px;
+    background: var(--blue-light); border: 2px solid var(--blue-mid); color: var(--blue-bright);
+    font-family: var(--font-ui); font-size: 12px; font-weight: 700; cursor: pointer;
+}
+.train-btn:hover { border-color: var(--blue-bright); }
+.train-btn.train-accent { background: var(--purple-light); border-color: var(--purple-mid); color: var(--purple); }
+.train-btn.recording { background: var(--red); border-color: var(--red); color: #fff; }
+.train-sep { width: 1px; height: 22px; background: var(--border-mid); margin: 0 4px; }
+.train-lr { font-size: 12px; font-weight: 600; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
+.train-lr input {
+    width: 64px; padding: 4px 6px; border-radius: 6px; border: 1px solid var(--border-mid);
+    font-family: var(--font-mono); font-size: 12px;
+}
+.train-count { margin-left: auto; font-size: 12px; font-weight: 700; color: var(--text-secondary); }
+.train-status { min-height: 20px; padding-bottom: 8px; font-size: 13px; color: var(--text-secondary); }
+.training-plots { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; }
+.train-plot-wrap { flex: 2 1 420px; min-width: 300px; }
+.train-loss-wrap { flex: 1 1 280px; }
+.train-plot-title { font-size: 12px; font-weight: 700; color: var(--text-secondary); padding-left: 55px; }
+#train-loss-plot { width: 100%; height: 300px; }
+#train-data-plot { width: 100%; }
+
+.train-group { display: inline-flex; align-items: center; gap: 5px; }
+.train-btn:disabled { opacity: 0.4; cursor: default; }
+.train-status { display: flex; align-items: center; gap: 8px; }
+.train-plot-title { display: flex; align-items: center; gap: 6px; }
+
+/* Training area: a light brown band across the bottom of the card, separate from the running controls above */
+.training .training-card {
+    margin: 28px -28px -28px;
+    padding: 24px 28px 28px;
+    background: #f6eee2;
+    border-top: 1px solid #e6d8c3;
+    border-radius: 0 0 var(--card-radius) var(--card-radius);
+}

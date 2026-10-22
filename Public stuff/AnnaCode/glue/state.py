@@ -24,7 +24,16 @@ is_running       = False
 all_plots: dict[str, object] = {}
 
 debug_mode = True
-beginner_mode = True    # True hides activation blocks, add/delete buttons and plots
+mode = "beginner"      # "beginner" | "advanced" | "training"
+beginner_mode = True    # True (Beginner and Training) hides the activation blocks and ignores activations
+
+# Training mode: recorded samples [{"id", "xs": {input id: v}, "ys": {output id: v}}], loss per epoch
+training_data: list[dict] = []
+data_point_counter = 0
+loss_history: list[float] = []
+undo_stack: list[list[dict]] = []   # batches of removed points, newest last
+is_recording = False
+is_training = False
 
 # Zoom only affects the network diagram's spacing/box sizes (via the CSS
 # --zoom variable) -- never font sizes or arrow stroke widths, UNTIL zoom

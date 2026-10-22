@@ -40,6 +40,28 @@ HELP = {
     ),
 }
 
+# Training-mode buttons (Training shows the short text only, so all the wording goes in the first slot)
+HELP.update({
+    "record": ("Press Record, then push the robot through its paces by hand. About ten times a second it saves the sensor "
+               "reading and the motor value(s) as one dot. Press again to stop.", ""),
+    "undo": ("Brings back the points you just removed (or cleared). You can undo several times.", ""),
+    "remove_zero": ("Deletes recorded points where every motor reads zero. Those are the moments the robot paused.", ""),
+    "clear": ("Deletes all recorded points and the loss history. Undo can bring the points back.", ""),
+    "save": ("Downloads the recorded points as a file so you can keep a good run or share it.", ""),
+    "load": ("Adds the points from a saved file to the ones you have. The file needs the same number of inputs and outputs "
+             "as your network. Press Clear first to replace instead of add.", ""),
+    "step": ("One pass over all your points, nudging the weight and bias a little to shrink the error.", ""),
+    "train": ("Fifty passes in a row. Watch the yellow line move toward the dots and the loss curve fall.", ""),
+    "lr": ("How big each nudge is. Too small and it learns slowly; too big and the loss bounces or grows. "
+           "Start at 0.05 and lower it if the loss rises.", ""),
+    "live": ("Shows where the robot is right now as a ring: sensor reading across, motor value up. Drive it again and see "
+             "whether the ring lands on the yellow line.", ""),
+    "dataplot": ("Each dot is one recorded sample, light for early and dark for late. The yellow line is what your network "
+                 "predicts. Click a dot, or drag a box around several, to remove them.", ""),
+    "loss": ("How far the line is from the dots on average. It should fall as you train and flatten out when learning is "
+             "done. If it rises, lower the learning rate.", ""),
+})
+
 HINTS = {
     "outputs": "Tip: if two motors are mirrored, one neuron needs a negative weight so they spin in the same direction.",
     "activation": "An activation makes the line bend. That is what stops layers from being merged into a single line.",
@@ -80,3 +102,6 @@ def _on_document_click(evt):
 
 def setup():
     document.addEventListener("click", create_proxy(_on_document_click))
+    # Controls tagged data-tip="id" get the same text as a mouseover tooltip
+    for el in document.querySelectorAll("[data-tip]"):
+        el.title = HELP[el.dataset.tip][0]

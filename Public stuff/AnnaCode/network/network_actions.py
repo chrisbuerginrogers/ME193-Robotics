@@ -197,6 +197,8 @@ def add_output(evt=None):
     window.setTimeout(create_proxy(make_plot), 60)
 
     sync.update_delete_visibility(state.outputs, "output")
+    if state.mode == "training":
+        match_last_layer_to_outputs()
     sync.update_neuron_usage_state()
     arrows.schedule_redraw()
 
@@ -220,8 +222,20 @@ def delete_output(oid: int):
     state.output_values.pop(oid, None)
 
     sync.update_delete_visibility(state.outputs, "output")
+    if state.mode == "training":
+        match_last_layer_to_outputs()
     sync.update_neuron_usage_state()
     arrows.schedule_redraw()
+
+def match_last_layer_to_outputs():
+    """Training mode hides the neuron controls, so keep one last-layer neuron per output."""
+    if not state.layers:
+        return
+    layer = state.layers[-1]
+    while len(layer["neurons"]) < len(state.outputs):
+        add_neuron(layer["id"])
+    while len(layer["neurons"]) > max(1, len(state.outputs)):
+        delete_neuron(layer["id"], layer["neurons"][-1]["id"])
 
 # ── Play / Stop ──────────────────────────────────────────────────────────────
 
