@@ -24,7 +24,7 @@ see state.py, activations.py, network_model.py, templates.py, arrows.py,
 sync.py, bindings.py, activation_editor.py, network_actions.py, zoom.py,
 and Device.py for the actual implementation.
 """
-from pyscript import when
+from pyscript import document, when
 
 import state
 import Device
@@ -126,19 +126,58 @@ def _on_toggle_activation(evt):
 def _on_randomize(evt):
     training.randomize_weights()
 
+FITTING_STATUS = "Pick an example curve, then change the weights, biases and activations until the green line follows the dots."
+TRAINING_STATUS = "Pick a device and a value for each input and output, press Record, and push the robot through its paces."
+
+def _place_example_select(in_input_box: bool):
+    """Fitting has no sensor, so the example picker takes the sensor dropdown's place in the input box."""
+    sel = state.get_id("example-select")
+    sel.title = ("Pick an example curve to fit. Changing it replaces the dots." if in_input_box
+                 else help_system.HELP["example"][0])
+    if in_input_box:
+        header = document.querySelector(".input-node .node-header")
+        if header and sel.parentElement is not header:
+            header.insertBefore(sel, header.firstChild)
+    else:
+        home = state.get_id("record-btn").parentElement
+        if sel.parentElement is not home:
+            home.insertBefore(sel, home.firstChild)
+
 def set_mode(mode: str):
+    previous = state.mode
     state.mode = mode
-    state.beginner_mode = mode != "advanced"           # Beginner and Training use the simplified layout
+    state.beginner_mode = mode != "advanced"           # Beginner, Fitting and Training use the simplified layout
     state.use_activations = mode != "beginner"         # Beginner ignores activations; the others apply them
-    state.show_activation_blocks = mode == "advanced" or (mode == "training" and state.show_activation)
+    # Fitting always shows the activation blocks (they are the point of it); Training hides them behind its toggle
+    show_act = mode == "fitting" or (mode == "training" and state.show_activation)
+    state.show_activation_blocks = mode == "advanced" or show_act
     wrap = state.get_id("page-wrap")
     wrap.classList.toggle("beginner", state.beginner_mode)
-    wrap.classList.toggle("training", mode == "training")
-    wrap.classList.toggle("show-act", mode == "training" and state.show_activation)
+    wrap.classList.toggle("training", state.in_training_family())
+    wrap.classList.toggle("fitting", mode == "fitting")
+    wrap.classList.toggle("show-act", show_act)
     update_activation_toggle()
-    for m in ("beginner", "advanced", "training"):
+    for m in ("beginner", "advanced", "fitting", "training"):
         state.get_id(f"mode-{m}-btn").classList.toggle("active", m == mode)
-    if mode == "training":
+    if previous != mode and "fitting" in (previous, mode):
+        training.clear_data()                  # example curves don't carry over to or from recorded data
+        state.undo_stack.clear()
+        state.example_key = None
+        training.set_status(FITTING_STATUS if mode == "fitting" else TRAINING_STATUS)
+    _place_example_select(mode == "fitting")
+    if previous != mode and mode == "fitting":
+        state.zoom_level = 0.8                 # small networks fit on screen at once
+        zoom.apply_zoom()
+    if mode == "fitting":
+        training.stop_recording()
+        if state.is_running:
+            network_actions.stop_network()
+        for kind, items, delete in (("input", state.inputs, network_actions.delete_input),
+                                    ("output", state.outputs, network_actions.delete_output)):
+            while len(items) > 1:               # Fitting is one x in, one y out
+                delete(items[-1]["id"])
+        network_actions.match_last_layer_to_outputs()
+    elif mode == "training":
         network_actions.match_last_layer_to_outputs()
     else:
         training.stop_recording()
@@ -155,6 +194,10 @@ def _on_mode_beginner(evt):
 @when("click", "#mode-advanced-btn")
 def _on_mode_advanced(evt):
     set_mode("advanced")
+
+@when("click", "#mode-fitting-btn")
+def _on_mode_fitting(evt):
+    set_mode("fitting")
 
 @when("click", "#mode-training-btn")
 def _on_mode_training(evt):
@@ -174,6 +217,9 @@ def _on_clear_data(evt):
 
 @when("change", "#example-select")
 def _on_example(evt):
+    if state.mode == "fitting":      # Fitting can swap curves freely; Training keeps Record and examples apart
+        training.clear_data()
+        state.undo_stack.clear()
     training.add_example(evt.target.value)
 
 @when("click", "#undo-btn")

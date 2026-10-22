@@ -24,11 +24,15 @@ is_running       = False
 all_plots: dict[str, object] = {}
 
 debug_mode = True
-mode = "beginner"      # "beginner" | "advanced" | "training"
+mode = "beginner"      # "beginner" | "advanced" | "fitting" | "training"
 beginner_mode = True    # True (Beginner and Training) uses the simplified layout
 use_activations = False       # Beginner ignores activations; Advanced and Training apply them
 show_activation_blocks = False   # whether the activation columns are on screen (Advanced always; Training via its toggle)
 show_activation = False       # Training mode's "+ Activation layers" toggle
+
+def in_training_family() -> bool:
+    """Fitting and Training share the brown data section and the simplified network layout."""
+    return mode in ("fitting", "training")
 
 # Training mode: recorded samples [{"id", "xs": {input id: v}, "ys": {output id: v}}], loss per epoch
 training_data: list[dict] = []

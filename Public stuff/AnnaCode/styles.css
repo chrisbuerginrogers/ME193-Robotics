@@ -1153,3 +1153,37 @@ body.running #adv-plot { opacity: 1; filter: none; }
 }
 .arrow-name:hover { border-color: var(--blue-mid); }
 .arrow-name:focus { outline: none; border-color: var(--blue-bright); background: #fff; }
+
+/* ── Fitting mode: hand-tune a network to an example curve (no devices, no recording) ── */
+.fitting #add-input-btn,
+.fitting #add-output-btn,
+.fitting .item-delete-btn,
+.fitting .act-toggle-btn,
+.fitting .preset-select,
+.fitting #preset-caption,
+.fitting .run-bar,
+.fitting .transfer-card,
+.fitting .train-or,
+.fitting #record-btn,
+.fitting #undo-btn,
+.fitting #remove-zero-btn,
+.fitting #clear-data-btn,
+.fitting #save-data-btn,
+.fitting #load-data-btn,
+.fitting #live-dot-toggle,
+.fitting label[data-tip="live"] { display: none !important; }
+.fitting .layers-row .col-activation:last-child { display: none !important; }
+.fitting .node-device-select,
+.fitting .plot-footer,
+.fitting .node-plot,
+.fitting .node-reading { display: none !important; }
+.fitting .input-node .node-header .train-select { width: 100%; min-width: 0; }
+.fitting .output-node { width: 230px; }
+.fitting .output-node .node-header { display: none !important; }
+#fit-mini-plot { display: none; width: 100%; height: 110px; }
+.fitting #fit-mini-plot { display: block; }
+
+/* Example curves live in Fitting now (in the input box); Training is for recorded data only */
+.training:not(.fitting) #example-select,
+.training:not(.fitting) .train-or { display: none; }
+.fitting .zoom-control { display: flex !important; }

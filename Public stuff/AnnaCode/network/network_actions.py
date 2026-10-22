@@ -177,7 +177,7 @@ def add_layer(evt=None):
     bindings.bind_layer_static_events(layer)
 
     add_neuron(lid)   # every layer starts with exactly one neuron
-    if state.mode == "training":
+    if state.in_training_family():
         match_last_layer_to_outputs()
 
     sync.update_neuron_usage_state()
@@ -199,7 +199,7 @@ def add_output(evt=None):
     window.setTimeout(create_proxy(make_plot), 60)
 
     sync.update_delete_visibility(state.outputs, "output")
-    if state.mode == "training":
+    if state.in_training_family():
         match_last_layer_to_outputs()
     sync.update_neuron_usage_state()
     arrows.schedule_redraw()
@@ -224,7 +224,7 @@ def delete_output(oid: int):
     state.output_values.pop(oid, None)
 
     sync.update_delete_visibility(state.outputs, "output")
-    if state.mode == "training":
+    if state.in_training_family():
         match_last_layer_to_outputs()
     sync.update_neuron_usage_state()
     arrows.schedule_redraw()

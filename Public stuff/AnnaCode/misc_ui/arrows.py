@@ -164,7 +164,7 @@ def straight_arrow(svg_el, x1, y1, x2, y2, stroke_w: float = 2.0, debug_value=No
                             "x": x1 + dx * 0.22 + (-dy / length) * offset,
                             "y": y1 + dy * 0.22 + (dx / length) * offset})
 
-    if state.debug_mode and debug_value is not None:
+    if state.debug_mode and state.mode != "fitting" and debug_value is not None:   # Fitting has no live values
         mx, my = x1 + (x2 - x1) * label_t, y1 + (y2 - y1) * label_t
         dx, dy = x2 - x1, y2 - y1
         length = math.sqrt(dx * dx + dy * dy) or 1.0
@@ -275,7 +275,8 @@ def _draw_arrows():
         if not neuron_l_pts:
             return
         n_names = {n["id"]: (n.get("name") or f"n{k + 1}", "n", n["id"]) for k, n in enumerate(layer["neurons"])}
-        if not state.show_activation_blocks:
+        last_in_fitting = state.mode == "fitting" and idx == len(state.layers) - 1   # Fitting keeps the output linear
+        if not state.show_activation_blocks or last_in_fitting:
             # Activation blocks are hidden: neurons connect straight on
             if idx + 1 < len(state.layers):
                 next_l_pts, _, next_heights = _anchor_points("cell-neuron-", state.layers[idx + 1]["neurons"])

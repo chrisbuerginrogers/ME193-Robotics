@@ -255,7 +255,7 @@ def _update_collapse_note(xi_names: list[str]):
 async def run_loop():
     while True:
         try:
-            if state.mode == "training":
+            if state.in_training_family():
                 import training_plot   # imported late: it imports this module for its label helper
                 training_plot.redraw()
             elif state.mode == "beginner":

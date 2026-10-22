@@ -7,6 +7,7 @@ loss curve. Click a dot to remove it.
 """
 import json
 import js
+from pyscript import document
 from pyscript.ffi import create_proxy
 from pyscript.js_modules import Plotly
 
@@ -37,10 +38,12 @@ def _js(obj):
     return js.JSON.parse(json.dumps(obj))
 
 def _on_point_click(pid):
-    training.remove_point(int(pid))
+    if state.mode != "fitting":   # the example curve in Fitting is a fixed target
+        training.remove_point(int(pid))
 
 def _on_selected(ids_json):
-    training.remove_points(json.loads(ids_json))
+    if state.mode != "fitting":
+        training.remove_points(json.loads(ids_json))
 
 def _redraw_data():
     global _panel_count, _click_attached, _click_proxy, _select_proxy, _last_sig, _last_ids
@@ -69,7 +72,7 @@ def _redraw_data():
 
     # Live reading (where the robot is right now), drawn as a ring
     toggle = state.get_id("live-dot-toggle")
-    live_on = bool(toggle and toggle.checked)
+    live_on = bool(toggle and toggle.checked) and state.mode != "fitting"   # Fitting has no sensors
     x_live = training._read("in", inp["id"]) if live_on else None
     ys_live = {o["id"]: training._read("out", o["id"]) for _, o in outs} if live_on else {}
 
@@ -78,19 +81,20 @@ def _redraw_data():
         "margin": {"l": 70, "r": 20, "t": 10, "b": 45},
         "grid": {"rows": len(outs), "columns": 1, "pattern": "independent", "roworder": "top to bottom", "ygap": 0.18},
         "showlegend": False,
-        "dragmode": "select",
+        "dragmode": False if state.mode == "fitting" else "select",
         "hovermode": "closest",
         "hoverdistance": 25,
         "paper_bgcolor": "rgba(0,0,0,0)",
     }
+    hover = {"hoverinfo": "skip"} if state.mode == "fitting" else {"hovertemplate": "click to remove<extra></extra>"}
     for panel, (k, out) in enumerate(outs, start=1):
         sfx = "" if panel == 1 else str(panel)
-        label = transfer_plot._axis_label("out", out["id"], f"output {k + 1}")
+        label = "y" if state.mode == "fitting" else transfer_plot._axis_label("out", out["id"], f"output {k + 1}")
         layout[f"xaxis{sfx}"] = {"zeroline": True}
         layout[f"yaxis{sfx}"] = {"title": {"text": label, "font": {"size": 12}}, "zeroline": True}
         axes = {"xaxis": f"x{sfx}", "yaxis": f"y{sfx}"}
         traces.append({**axes, "x": xs_data, "y": [p["ys"].get(out["id"], 0.0) for p in data],
-                       "customdata": ids, "mode": "markers", "hovertemplate": "click to remove<extra></extra>",
+                       "customdata": ids, "mode": "markers", **hover,
                        "marker": {"color": list(range(len(data))), "colorscale": ORDER_SCALE, "cmin": 0,
                                   "cmax": max(1, len(data) - 1), "size": 8, "opacity": 0.85}})
         if live_on and x_live is not None and ys_live.get(out["id"]) is not None:
@@ -100,7 +104,8 @@ def _redraw_data():
         traces.append({**axes, "x": sweep, "y": fit, "mode": "lines", "hoverinfo": "skip",
                        "line": {"color": LINE_COLOR, "width": 3}})
     layout[f"xaxis{len(outs) if len(outs) > 1 else ''}"]["title"] = {
-        "text": transfer_plot._axis_label("in", inp["id"], inp["name"]), "font": {"size": 13}}
+        "text": "x" if state.mode == "fitting" else transfer_plot._axis_label("in", inp["id"], inp["name"]),
+        "font": {"size": 13}}
 
     # Redrawing wipes the hover tag, which made clicks land on nothing. Skip the redraw when nothing changed, and
     # while the pointer is on the plot unless the points themselves changed (e.g. one was just removed).
@@ -125,6 +130,38 @@ def _redraw_data():
         Plotly.onSelect(DATA_ID, _select_proxy)
         _click_attached = True
 
+_mini_sig = None
+
+def _redraw_mini():
+    """Fitting: the network's own curve (y against x) drawn inside the output box."""
+    global _mini_sig
+    card = state.get_id("fit-mini-plot")
+    if not card:
+        host = document.querySelector(".output-node")
+        if not host:
+            return
+        card = document.createElement("div")
+        card.id = "fit-mini-plot"
+        host.appendChild(card)
+    if state.mode != "fitting" or not state.inputs or not state.layers:
+        return
+    xs = [p["xs"].get(state.inputs[0]["id"], 0.0) for p in state.training_data]
+    lo, hi = (min(xs), max(xs)) if xs else (-100.0, 100.0)
+    pad = (hi - lo) * 0.1 or 1.0
+    sweep = [lo - pad + (hi - lo + 2 * pad) * k / 40 for k in range(41)]
+    others = [0.0] * (len(state.inputs) - 1)
+    ys = [network_model.evaluate([x] + others)[0] for x in sweep]
+    traces = [{"x": sweep, "y": ys, "mode": "lines", "hoverinfo": "skip", "line": {"color": LINE_COLOR, "width": 3}}]
+    layout = {"margin": {"l": 28, "r": 6, "t": 6, "b": 18}, "showlegend": False, "paper_bgcolor": "rgba(0,0,0,0)",
+              "plot_bgcolor": "#ffffff", "font": {"size": 9},
+              "xaxis": {"zeroline": True, "nticks": 4}, "yaxis": {"zeroline": True, "nticks": 4}}
+    sig = json.dumps([traces, layout])
+    if sig == _mini_sig:
+        return
+    _mini_sig = sig
+    Plotly.react("fit-mini-plot", _js(traces), _js(layout), _js(STATIC))
+    arrows.schedule_redraw()
+
 def _redraw_loss():
     global _last_loss_len
     if not state.get_id(LOSS_ID) or len(state.loss_history) == _last_loss_len:
@@ -142,15 +179,37 @@ def _redraw_loss():
 
 def _debug_preview():
     """Debug arrows show live values even when the network isn't Running (Run would drive the motors)."""
-    if state.debug_mode and not state.is_running and state.inputs and state.layers and state.outputs:
+    if state.mode != "fitting" and state.debug_mode and not state.is_running and state.inputs and state.layers and state.outputs:
         network_model.preview_forward()
         arrows.redraw_arrows()
 
+def _fitting_error_text() -> str:
+    """How far the network's line is from the example dots: the typical miss, in the output's own units."""
+    data = state.training_data
+    if not data or not state.inputs or not state.outputs or not state.layers:
+        return "0 points"
+    inp, out = state.inputs[0], state.outputs[0]
+    total = 0.0
+    for p in data:
+        vals = [p["xs"].get(i["id"], 0.0) for i in state.inputs]
+        total += (network_model.evaluate(vals)[0] - p["ys"].get(out["id"], 0.0)) ** 2
+    return f"{len(data)} points · average miss {(total / len(data)) ** 0.5:.1f}"
+
+def _keep_output_linear():
+    """Fitting hides the last activation block, so make sure nothing hidden is bending the output."""
+    if state.mode == "fitting" and state.layers and state.layers[-1]["act_fn"]:
+        last = state.layers[-1]
+        last["act_fn"] = ""
+        sel = state.get_id(f"act-select-{last['id']}")
+        if sel:
+            sel.value = ""
+
 def redraw():
+    _keep_output_linear()
     _debug_preview()
     count = state.get_id("train-count")
     if count:
-        count.textContent = f"{len(state.training_data)} points"
+        count.textContent = _fitting_error_text() if state.mode == "fitting" else f"{len(state.training_data)} points"
     undo_btn = state.get_id("undo-btn")
     if undo_btn:
         undo_btn.disabled = not state.undo_stack
@@ -159,7 +218,7 @@ def redraw():
         state.example_key = None
     sel = state.get_id("example-select")
     if sel:
-        sel.disabled = bool(state.training_data) or state.is_recording
+        sel.disabled = state.mode != "fitting" and (bool(state.training_data) or state.is_recording)
         if state.example_key is None:
             sel.value = ""
     rec = state.get_id("record-btn")
@@ -172,4 +231,5 @@ def redraw():
         if shown:
             state.get_id("train-hint-text").textContent = training.EXAMPLES[state.example_key]["hint"]
     _redraw_data()
+    _redraw_mini()
     _redraw_loss()

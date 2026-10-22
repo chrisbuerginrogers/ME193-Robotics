@@ -77,8 +77,16 @@ _seen = set()
 def close_help(evt=None):
     state.get_id("help-popover").classList.add("hidden")
 
+# Fitting has no sensors or motors, so its input and output boxes get their own wording
+FITTING_HELP = {
+    "input": ("Pick an example curve here. Its x values are what go into the neurons, and the dots on the graph below "
+              "show the y the curve should give back.", ""),
+    "output": ("This is y, the network's answer. The green line on the graph is y for every x. Change the weights, "
+               "biases and activations until it follows the dots.", ""),
+}
+
 def open_help(help_id: str, anchor):
-    basic, extra = HELP[help_id]
+    basic, extra = FITTING_HELP[help_id] if state.mode == "fitting" and help_id in FITTING_HELP else HELP[help_id]
     text = basic if state.beginner_mode or not extra else (basic + " " + extra).strip()
     state.get_id("help-body").textContent = text
     pop = state.get_id("help-popover")
