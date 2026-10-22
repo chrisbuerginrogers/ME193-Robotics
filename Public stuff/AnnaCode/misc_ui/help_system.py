@@ -64,8 +64,10 @@ HELP.update({
              "whether the ring lands on the green line.", ""),
     "dataplot": ("Each dot is one recorded sample, light for early and dark for late. The green line is what your network "
                  "predicts. Click a dot, or drag a box around several, to remove them.", ""),
-    "loss": ("How far the line is from the dots on average. It should fall as you train and flatten out when learning is "
-             "done. If it rises, lower the learning rate.", ""),
+    "loss": ("How far the line is from the dots on average. It is always the mean squared error: for each dot, take the "
+             "network's output minus the desired value, square it, and average over all dots. It is measured on rescaled "
+             "data, so it has no units. It should fall as you train and flatten out when learning is done. "
+             "If it rises, lower the learning rate.", ""),
 })
 
 HINTS = {
