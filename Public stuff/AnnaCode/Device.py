@@ -474,6 +474,13 @@ class Element:
         self.hub = None
         self.myble = None   
 
+    def read(self, channel):
+        """Current value of a channel. BothSpeed is worked out from the two motors, signed to match the
+        command: sending +82 reads back about +82, so the reading, the recorded data and the Debug arrow all agree."""
+        if channel == "BothSpeed":
+            return (self.state["RightSpeed"] - self.state["LeftSpeed"]) / 2
+        return self.state[channel]
+
     def build_state(self):
         if "Double Motor" in self.name:
             self.state = {
@@ -591,7 +598,10 @@ class Element:
         for graph, var in zip(self.plots, self.plot_vars):
             val = 0
             if var == "BothSpeed":
-                val = (self.state["LeftSpeed"] - self.state["RightSpeed"])/2
+                try:
+                    val = self.read("BothSpeed")
+                except TypeError:   # the motors have not reported yet
+                    val = 0
             elif var in self.hardware_state:
                 try:
                     val = self.hardware_state[var]

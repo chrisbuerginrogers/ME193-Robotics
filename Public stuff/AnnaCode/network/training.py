@@ -40,7 +40,7 @@ def _read(kind: str, item_id: int):
     dev = Device.device_by_name(dev_el.value if dev_el else "")
     channel = chan_el.value if chan_el else ""
     try:
-        return float(dev.state[channel]) if dev and channel else None
+        return float(dev.read(channel)) if dev and channel else None
     except (KeyError, TypeError, ValueError):
         return None
 

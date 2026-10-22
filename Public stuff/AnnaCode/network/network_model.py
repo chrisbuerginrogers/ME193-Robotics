@@ -82,7 +82,7 @@ def read_inputs():
         channel  = chan_el.value if chan_el else ""
         dev = Device.device_by_name(dev_name)
         try:
-            val = float(dev.state[channel]) if dev and channel else 0.0
+            val = float(dev.read(channel)) if dev and channel else 0.0
         except (KeyError, TypeError, ValueError):
             val = 0.0
         state.input_values[iid] = val
