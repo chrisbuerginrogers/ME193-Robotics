@@ -21,6 +21,7 @@ import state
 import Device
 import sync
 import activations
+import network_model
 
 SAMPLE_PERIOD = 0.1   # seconds between recorded samples
 EPOCH_PAUSE = 0.03    # lets the plots repaint between epochs
@@ -208,17 +209,6 @@ def save_dataset(evt=None):
     js.URL.revokeObjectURL(url)
     set_status(f"Saved {len(state.training_data)} points.")
 
-def _unchosen() -> list[str]:
-    """The inputs/outputs that still need a device and a value picked."""
-    missing = []
-    for kind, items in (("in", state.inputs), ("out", state.outputs)):
-        for k, it in enumerate(items):
-            dev_el = state.get_id(f"dev-{kind}-{it['id']}")
-            chan_el = state.get_id(f"chan-{kind}-{it['id']}")
-            if not (dev_el and dev_el.value and chan_el and chan_el.value):
-                missing.append(f"input ({it['name']})" if kind == "in" else f"output {k + 1}")
-    return missing
-
 async def _record_loop():
     while state.is_recording:
         xs = {i["id"]: _read("in", i["id"]) for i in state.inputs}
@@ -228,10 +218,8 @@ async def _record_loop():
         await asyncio.sleep(SAMPLE_PERIOD)
 
 def start_recording():
-    missing = _unchosen()
-    if missing:
+    if not network_model.alert_unchosen("record"):
         set_status("Pick a device and a value for every input and output first.")
-        js.alert("Before you record, choose a device and a value for:\n\n" + "\n".join("  \u2022 " + m for m in missing))
         return
     state.is_recording = True
     btn = state.get_id("record-btn")

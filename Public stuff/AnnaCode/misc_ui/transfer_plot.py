@@ -58,31 +58,49 @@ def redraw_beginner():
     if not state.get_id(PLOT_ID):
         return
 
-    inp, out = state.inputs[0], state.outputs[0]
+    inp = state.inputs[0]
     base = [state.input_values.get(i["id"], 0.0) for i in state.inputs]
     xs = _sweep_axis(base, 0)
-
-    def y_at(x):
-        vals = network_model.evaluate([x] + base[1:])
-        return vals[0] if vals else 0.0
-
     x_now = base[0]
-    y_now = y_at(x_now)
-    guide = {"color": "#dc2626", "width": 1}   # thin red lines from the current point to the axes
-    traces = [
-        {"x": xs, "y": [y_at(x) for x in xs], "mode": "lines",
-         "line": {"color": LINE_COLOR, "width": 3}, "hoverinfo": "skip"},
-        {"x": [x_now, x_now], "y": [0, y_now], "mode": "lines", "line": guide, "hoverinfo": "skip"},
-        {"x": [0, x_now], "y": [y_now, y_now], "mode": "lines", "line": guide, "hoverinfo": "skip"},
-        {"x": [x_now], "y": [y_now], "mode": "markers",
-         "marker": {"color": "#1a1d2e", "size": 10}, "hoverinfo": "skip"},
-    ]
+
+    # One line per output: the whole path from the input to that output (the neurons along it, summed up)
+    def outputs_at(x):
+        return network_model.evaluate([x] + base[1:])
+
+    sweep = [outputs_at(x) for x in xs]
+    now = outputs_at(x_now)
+    outs = [(k, o) for k, o in enumerate(state.outputs) if k < len(now)]
+    if not outs:
+        return
+
+    def short_label(out, k):
+        el = state.get_id(f"chan-out-{out['id']}")
+        return el.value if el and el.value else f"output {k + 1}"
+
+    guide = {"color": GUIDE_COLOR, "width": 1}   # thin red lines from the live point to the axes
+    traces = []
+    for n, (k, out) in enumerate(outs):
+        color = OUTPUT_COLORS[n % len(OUTPUT_COLORS)]
+        traces.append({"x": xs, "y": [v[k] for v in sweep], "mode": "lines", "name": short_label(out, k),
+                       "line": {"color": color, "width": 3}, "hoverinfo": "skip"})
+    for k, out in outs:
+        traces.append({"x": [x_now, x_now], "y": [0, now[k]], "mode": "lines", "line": guide,
+                       "showlegend": False, "hoverinfo": "skip"})
+        traces.append({"x": [0, x_now], "y": [now[k], now[k]], "mode": "lines", "line": guide,
+                       "showlegend": False, "hoverinfo": "skip"})
+    for k, out in outs:
+        traces.append({"x": [x_now], "y": [now[k]], "mode": "markers", "showlegend": False,
+                       "marker": {"color": "#1a1d2e", "size": 10}, "hoverinfo": "skip"})
+
+    many = len(outs) > 1
     layout = {
-        "margin": {"l": 55, "r": 20, "t": 10, "b": 45},
+        "margin": {"l": 55, "r": 20, "t": 10, "b": 90 if many else 45},
         "xaxis": {"title": {"text": _axis_label("in", inp["id"], inp["name"]), "font": {"size": 13}}, "zeroline": True},
-        "yaxis": {"title": {"text": _axis_label("out", out["id"], "output"), "font": {"size": 13}},
-                  "zeroline": True},
-        "showlegend": False,
+        "yaxis": {"title": {"text": "outputs" if many else _axis_label("out", outs[0][1]["id"], "output"),
+                            "font": {"size": 13}}, "zeroline": True},
+        "showlegend": many,
+        "legend": {"orientation": "h", "x": 0.5, "xanchor": "center", "y": -0.42, "yanchor": "top",
+                   "font": {"size": 11}},
         "paper_bgcolor": "rgba(0,0,0,0)",
     }
     box = state.get_id(PLOT_ID)   # the slot can change size (e.g. a wider network); Plotly won't notice by itself

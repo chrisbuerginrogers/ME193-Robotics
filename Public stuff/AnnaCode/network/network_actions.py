@@ -242,6 +242,8 @@ def match_last_layer_to_outputs():
 # ── Play / Stop ──────────────────────────────────────────────────────────────
 
 def play_network(evt=None):
+    if not network_model.alert_unchosen("press Run"):
+        return
     state.is_running = True
     state.get_id("play-btn").setAttribute("disabled", "")
     state.get_id("stop-btn").removeAttribute("disabled")

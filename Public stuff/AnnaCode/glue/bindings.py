@@ -73,12 +73,16 @@ def _on_device_change(evt, prefix, item_lookup_fn, channels_html_fn):
     matched  = Device.device_by_name(dev_name)
     if chan_sel:
         chan_sel.innerHTML = channels_html_fn(matched)
+        # a Double Motor driving the only output defaults to BothSpeed (otherwise the first channel, LeftSpeed)
+        if (prefix == "out" and matched and "Double Motor" in matched.name and len(state.outputs) == 1
+                and any(chan_sel.options.item(i).value == "BothSpeed" for i in range(chan_sel.options.length))):
+            chan_sel.value = "BothSpeed"
 
     plot_id = f"plot-{prefix}-{iid}"
     _detach_plot_from_device(plot_id, item.get("prev_device"))
     first_channel = None
     if chan_sel and chan_sel.options.length > 0:
-        first_channel = chan_sel.options.item(0).value
+        first_channel = chan_sel.value
     _attach_plot_to_device(plot_id, dev_name, first_channel)
 
     item["prev_device"]  = dev_name

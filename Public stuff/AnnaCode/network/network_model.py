@@ -68,6 +68,25 @@ def evaluate(input_vals: list[float]) -> list[float]:
 
 _last_result = {}   # last int result per output id, to log sudden jumps
 
+def unchosen_io() -> list[str]:
+    """The inputs/outputs that still need a device and a value picked (reads the dropdowns, like read_inputs)."""
+    missing = []
+    for kind, items in (("in", state.inputs), ("out", state.outputs)):
+        for k, it in enumerate(items):
+            dev_el = state.get_id(f"dev-{kind}-{it['id']}")
+            chan_el = state.get_id(f"chan-{kind}-{it['id']}")
+            if not (dev_el and dev_el.value and chan_el and chan_el.value):
+                missing.append(f"input ({it['name']})" if kind == "in" else f"output {k + 1}")
+    return missing
+
+def alert_unchosen(action: str) -> bool:
+    """Alert if any input or output has no device/value yet. True means go ahead."""
+    missing = unchosen_io()
+    if missing:
+        from pyscript import window
+        window.alert(f"Before you {action}, choose a device and a value for:\n\n" + "\n".join("  \u2022 " + m for m in missing))
+    return not missing
+
 def read_inputs():
     # Collect input values.
     # Pragmatic exception: reads the device/channel <select> elements directly
