@@ -4,7 +4,7 @@ AnnaCode — transfer_plot.py
 Two plots of the network's response to one swept input (any other inputs are
 held at their current values; a dot marks the live point):
 
-  Beginner -- one dark yellow line: first input vs first output, shown to the
+  Basic -- one green line: first input vs first output, shown to the
               right of the network.
   Advanced -- below the run button: one panel per hidden layer plus one panel
               per output. Every neuron gets a solid line (after its activation)
@@ -21,13 +21,16 @@ import network_model
 PLOT_ID = "transfer-plot"
 ADV_ID = "adv-plot"
 ADV_SELECT_ID = "adv-x-select"
-LINE_COLOR = "#b8860b"   # dark yellow
+LINE_COLOR = "#16a34a"   # green: the network's output line
 POINTS = 41
-PANEL_HEIGHT = 240
+PANEL_HEIGHT = 300
+PANELS_PER_ROW = 3
+OUTPUT_COLORS = [LINE_COLOR, "#0d9488", "#65a30d", "#0891b2"]   # greens, one per output
+GUIDE_COLOR = "#dc2626"   # thin red lines from the live point to the axes
 HIDDEN_COLORS = ["#2563eb", "#7c3aed", "#db2777", "#059669", "#dc2626", "#0891b2", "#9333ea", "#65a30d"]
 CONFIG = {"displayModeBar": False, "staticPlot": True, "responsive": True}
 
-_adv_panel_count = 0
+_adv_panel_count = None
 _adv_select_key = ""
 
 def _js(obj):
@@ -47,7 +50,7 @@ def _sweep_axis(base: list[float], idx: int):
     span = max(100.0, abs(base[idx]))
     return [-span + 2 * span * k / (POINTS - 1) for k in range(POINTS)]
 
-# ── Beginner ─────────────────────────────────────────────────────────────────
+# ── Basic ─────────────────────────────────────────────────────────────────
 
 def redraw_beginner():
     if not state.inputs or not state.outputs or not state.layers:
@@ -99,6 +102,21 @@ def _sync_x_select():
         _adv_select_key = key
     return min(int(sel.value or 0), len(names) - 1)
 
+def _y_range(entries, sweeps, live):
+    """Size a panel to the solid (after-activation) lines. The dashed before-activation line only widens it when
+    it is of similar size; otherwise it runs off the chart (a Sigmoid's 0-to-1 curve would be squashed flat by a
+    dashed line spanning -100 to 100)."""
+    post = [0.0] + [live[li][j][1] for _, _, li, j in entries]
+    pre = []
+    for _, _, li, j in entries:
+        post += [s[li][j][1] for s in sweeps]
+        pre += [s[li][j][0] for s in sweeps]
+    lo, hi = min(post), max(post)
+    if pre and (max(pre) - min(pre)) <= 4 * max(hi - lo, 1e-9):
+        lo, hi = min(lo, min(pre)), max(hi, max(pre))
+    pad = (hi - lo) * 0.08 or 1.0
+    return [lo - pad, hi + pad]
+
 def redraw_advanced():
     global _adv_panel_count
     el = state.get_id(ADV_ID)
@@ -128,42 +146,56 @@ def redraw_advanced():
             entries.append((f"L{li + 1} n{j + 1}", HIDDEN_COLORS[color_n % len(HIDDEN_COLORS)], li, j))
             color_n += 1
         panels.append((f"Layer {li + 1}", entries))
+    # All the outputs share one panel, each in its own shade of green
+    out_entries, out_labels = [], []
     for j, out in enumerate(state.outputs):
         if j < len(state.layers[last]["neurons"]):
             label = _axis_label("out", out["id"], f"output {j + 1}")
-            panels.append((label, [(f"{label} (n{j + 1})", LINE_COLOR, last, j)]))
+            out_entries.append((f"{label} (n{j + 1})", OUTPUT_COLORS[len(out_entries) % len(OUTPUT_COLORS)], last, j))
+            out_labels.append(label)
+    if out_entries:
+        panels.append((out_labels[0] if len(out_labels) == 1 else "outputs", out_entries))
 
+    # Panels sit side by side, wrapping onto another row after PANELS_PER_ROW
+    cols = min(len(panels), PANELS_PER_ROW)
+    rows = -(-len(panels) // PANELS_PER_ROW)
+    area = rows * PANEL_HEIGHT   # plot-area height in px, so the legend can be placed just under the axes
     traces, layout = [], {
-        "margin": {"l": 70, "r": 20, "t": 10, "b": 45},
-        "grid": {"rows": len(panels), "columns": 1, "pattern": "independent",
-                 "roworder": "top to bottom", "ygap": 0.18},
+        "margin": {"l": 60, "r": 20, "t": 10, "b": 110},
+        "grid": {"rows": rows, "columns": cols, "pattern": "independent",
+                 "roworder": "top to bottom", "xgap": 0.12, "ygap": 0.4},
         "showlegend": True,
-        "legend": {"font": {"size": 11}},
+        "legend": {"orientation": "h", "x": 0, "y": -75 / area, "yanchor": "top", "font": {"size": 11}},
         "paper_bgcolor": "rgba(0,0,0,0)",
     }
+    x_title = {"text": _axis_label("in", state.inputs[xi]["id"], state.inputs[xi]["name"]), "font": {"size": 12}}
     for k, (title, entries) in enumerate(panels, start=1):
         sfx = "" if k == 1 else str(k)
-        layout[f"xaxis{sfx}"] = {"zeroline": True}
-        layout[f"yaxis{sfx}"] = {"title": {"text": title, "font": {"size": 12}}, "zeroline": True}
+        layout[f"xaxis{sfx}"] = {"zeroline": True, "title": x_title}
+        layout[f"yaxis{sfx}"] = {"title": {"text": title, "font": {"size": 12}}, "zeroline": True,
+                                 "range": _y_range(entries, sweeps, live)}
+        axes = {"xaxis": f"x{sfx}", "yaxis": f"y{sfx}", "hoverinfo": "skip"}
         for name, color, li, j in entries:
             group = f"{li}-{j}"
-            common = {"x": xs, "mode": "lines", "legendgroup": group,
-                      "xaxis": f"x{sfx}", "yaxis": f"y{sfx}", "hoverinfo": "skip"}
+            common = {**axes, "x": xs, "mode": "lines", "legendgroup": group}
             traces.append({**common, "y": [s[li][j][0] for s in sweeps], "showlegend": False,
                            "line": {"color": color, "width": 1.5, "dash": "dash"}})
             traces.append({**common, "y": [s[li][j][1] for s in sweeps], "name": name,
                            "line": {"color": color, "width": 3}})
-            traces.append({"x": [base[xi]], "y": [live[li][j][1]], "mode": "markers",
+            # the live point: thin red lines to the axes, then a black dot (as in Basic)
+            x_now, y_now = base[xi], live[li][j][1]
+            guide = {**axes, "mode": "lines", "legendgroup": group, "showlegend": False,
+                     "line": {"color": GUIDE_COLOR, "width": 1}}
+            traces.append({**guide, "x": [x_now, x_now], "y": [0, y_now]})
+            traces.append({**guide, "x": [0, x_now], "y": [y_now, y_now]})
+            traces.append({**axes, "x": [x_now], "y": [y_now], "mode": "markers",
                            "legendgroup": group, "showlegend": False,
-                           "xaxis": f"x{sfx}", "yaxis": f"y{sfx}", "hoverinfo": "skip",
-                           "marker": {"color": color, "size": 9, "line": {"color": "#fff", "width": 1.5}}})
-    layout[f"xaxis{len(panels) if len(panels) > 1 else ''}"]["title"] = {
-        "text": _axis_label("in", state.inputs[xi]["id"], state.inputs[xi]["name"]), "font": {"size": 13}}
+                           "marker": {"color": "#000", "size": 9, "line": {"color": "#fff", "width": 1.5}}})
 
-    el.style.height = f"{len(panels) * PANEL_HEIGHT + 60}px"
-    if len(panels) != _adv_panel_count:
+    el.style.height = f"{area + 110}px"
+    if (rows, cols, len(panels)) != _adv_panel_count:
         Plotly.purge(ADV_ID)   # drop stale axes when panels come or go
-        _adv_panel_count = len(panels)
+        _adv_panel_count = (rows, cols, len(panels))
     Plotly.react(ADV_ID, _js(traces), _js(layout), _js(CONFIG))
 
 def _fmt(v: float) -> str:

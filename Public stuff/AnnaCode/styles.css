@@ -1119,3 +1119,8 @@ body.running .transfer-hint { display: none; }
     margin-top: 0; padding: 0; min-width: 40px; text-align: right;
     font-size: 9px; letter-spacing: 0.05em; color: var(--text-muted);
 }
+
+/* Advanced plots: greyed out with "Hit Run" over them until Run is pressed (same as Basic) */
+.adv-plot-wrap { position: relative; }
+#adv-plot { opacity: 0.3; filter: grayscale(1); transition: opacity 0.2s, filter 0.2s; }
+body.running #adv-plot { opacity: 1; filter: none; }

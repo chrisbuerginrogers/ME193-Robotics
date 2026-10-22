@@ -57,12 +57,12 @@ HELP.update({
                    "whether or not they are visible; the label lists any that are on while hidden. An activation lets the "
                    "line bend, so compare the fit with and without one.", ""),
     "step": ("One pass over all your points, nudging the weight and bias a little to shrink the error.", ""),
-    "train": ("Fifty passes in a row. Watch the yellow line move toward the dots and the loss curve fall.", ""),
+    "train": ("Fifty passes in a row. Watch the green line move toward the dots and the loss curve fall.", ""),
     "lr": ("How big each nudge is. Too small and it learns slowly; too big and the loss bounces or grows. "
            "Start at 0.05 and lower it if the loss rises.", ""),
     "live": ("Shows where the robot is right now as a ring: sensor reading across, motor value up. Drive it again and see "
-             "whether the ring lands on the yellow line.", ""),
-    "dataplot": ("Each dot is one recorded sample, light for early and dark for late. The yellow line is what your network "
+             "whether the ring lands on the green line.", ""),
+    "dataplot": ("Each dot is one recorded sample, light for early and dark for late. The green line is what your network "
                  "predicts. Click a dot, or drag a box around several, to remove them.", ""),
     "loss": ("How far the line is from the dots on average. It should fall as you train and flatten out when learning is "
              "done. If it rises, lower the learning rate.", ""),

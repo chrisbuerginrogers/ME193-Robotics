@@ -2,7 +2,7 @@
 AnnaCode — training_plot.py
 
 Training-mode plots: the recorded samples as dots (one panel per output, input on
-the x axis) with the network's current response as a dark yellow line, plus the
+the x axis) with the network's current response as a green line, plus the
 loss curve. Click a dot to remove it.
 """
 import json
