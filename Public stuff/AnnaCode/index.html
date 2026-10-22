@@ -256,7 +256,7 @@
 </svg>
 <div style="z-index:9998;font-family:sans-serif;background-color:#292929;padding:2px 8px;position:fixed;bottom:0;right:0;left:0"></div>
 <div style="z-index:9999;color:white;font-size: 0.7rem;font-family:sans-serif;padding: 5px;position:fixed;bottom:0;right:0">
-  <a href="https://pyscript.com/@tuftsceeo" id="made-on" target="_blank" style="color:#FFF;text-decoration:none;">Made on pyscript.com</a>&nbsp;│&nbsp;<a href="https://pyscript.com/@tuftsceeo/network-builder/latest" id="view-code" target="_blank" style="color:#FFF;text-decoration:none;">View Code</a><span id="install-pwa-section" hidden>&nbsp;│&nbsp; <a id="install-pwa" style="cursor:pointer; color:#FFF;">Install</a></span>&nbsp;&nbsp
+  <a href="https://github.com/chrisbuerginrogers/ME193-Robotics/tree/main/Public%20stuff/AnnaCode" id="view-code" target="_blank" rel="noopener" style="color:#FFF;text-decoration:none;">View Code</a><span id="install-pwa-section" hidden>&nbsp;│&nbsp; <a id="install-pwa" style="cursor:pointer; color:#FFF;">Install</a></span>&nbsp;&nbsp
 </div>
 
 <script>
@@ -294,10 +294,6 @@ function disableInAppInstallPrompt() {
     window.heap=window.heap||[],heap.load=function(e,t){window.heap.appid=e,window.heap.config=t=t||{};var r=document.createElement("script");r.type="text/javascript",r.async=!0,r.src="https://cdn.heapanalytics.com/js/heap-"+e+".js";var a=document.getElementsByTagName("script")[0];a.parentNode.insertBefore(r,a);for(var n=function(e){return function(){heap.push([e].concat(Array.prototype.slice.call(arguments,0)))}},p=["addEventProperties","addUserProperties","clearEventProperties","identify","resetIdentity","removeEventProperty","setEventProperties","track","unsetEventProperty"],o=0;o<p.length;o++)heap[p[o]]=n(p[o])};
     heap.load(heap_app_id);
 
-    // Add event listener to the made-on link
-    document.querySelector("#made-on").addEventListener("click", () => {
-      heap.track("PSADC - Make on Pyscript");
-    });
     // Add event listener to the view-code link
     document.querySelector("#view-code").addEventListener("click", () => {
       heap.track("PSADC - View Code");
