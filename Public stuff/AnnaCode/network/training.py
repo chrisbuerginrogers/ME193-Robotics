@@ -10,8 +10,8 @@ ordinary weights and biases. If the last layer has an activation, the targets ar
 units (a y-scale cannot be folded through a non-linear output).
 """
 import asyncio
-import json
 import math
+import time
 
 import random
 
@@ -45,9 +45,19 @@ def _read(kind: str, item_id: int):
     except (KeyError, TypeError, ValueError):
         return None
 
-def add_point(xs: dict, ys: dict):
+def add_point(xs: dict, ys: dict, t: float | None = None):
+    """t is the recording time in seconds (any origin); points without one (examples) are timed by their order."""
     state.data_point_counter += 1
-    state.training_data.append({"id": state.data_point_counter, "xs": dict(xs), "ys": dict(ys)})
+    p = {"id": state.data_point_counter, "xs": dict(xs), "ys": dict(ys)}
+    if t is not None:
+        p["t"] = t
+    state.training_data.append(p)
+
+def _times() -> list[float]:
+    """Each point's time in seconds, starting at 0 for the earliest point."""
+    raw = [p.get("t", k * SAMPLE_PERIOD) for k, p in enumerate(state.training_data)]
+    t0 = min(raw, default=0.0)
+    return [t - t0 for t in raw]
 
 MAX_UNDO = 100
 
@@ -164,35 +174,60 @@ def _label(kind: str, item: dict, fallback: str) -> str:
     import transfer_plot
     return transfer_plot._axis_label(kind, item["id"], fallback)
 
-def dataset_to_json() -> str:
-    """Rows are positional: x[i] belongs to the i-th input, y[j] to the j-th output."""
+def dataset_to_tsv() -> str:
+    """Tab-separated, one row per point: time (s) starting at 0, then the input column(s), then the output column(s),
+    with a header of their names. Columns are positional: after time, the first ones belong to the inputs in order."""
     in_ids = [i["id"] for i in state.inputs]
     out_ids = [o["id"] for o in state.outputs]
-    return json.dumps({
-        "format": "annacode-dataset", "version": 1,
-        "inputs": [_label("in", i, i["name"]) for i in state.inputs],
-        "outputs": [_label("out", o, f"output {k + 1}") for k, o in enumerate(state.outputs)],
-        "rows": [{"x": [p["xs"].get(i, 0.0) for i in in_ids], "y": [p["ys"].get(o, 0.0) for o in out_ids]}
-                 for p in state.training_data],
-    })
+    header = (["Time (s)"] + [_label("in", i, i["name"]) for i in state.inputs]
+              + [_label("out", o, f"output {k + 1}") for k, o in enumerate(state.outputs)])
+    lines = ["\t".join(h.replace("\t", " ") for h in header)]
+    for t, p in zip(_times(), state.training_data):
+        vals = [t] + [p["xs"].get(i, 0.0) for i in in_ids] + [p["ys"].get(o, 0.0) for o in out_ids]
+        lines.append("\t".join(f"{v:.6g}" for v in vals))
+    return "\n".join(lines) + "\n"
+
+def _parse_tsv(text: str):
+    """(n_columns, rows of floats) from a TSV with a header line, or None if it isn't one."""
+    lines = [l for l in text.replace("\r\n", "\n").replace("\r", "\n").split("\n") if l.strip()]
+    if len(lines) < 2:
+        return None
+    n_cols = len(lines[0].split("\t"))
+    rows = []
+    for l in lines[1:]:
+        cells = [c.strip().strip('"') for c in l.split("\t")]
+        try:
+            row = [float(c) for c in cells[:n_cols]]
+        except ValueError:
+            return None
+        if len(row) != n_cols:
+            return None
+        rows.append(row)
+    return n_cols, rows
 
 def load_dataset(text: str) -> int:
-    """Append the saved rows to the current data. Returns how many were added (0 on a mismatch)."""
-    try:
-        data = json.loads(text)
-        rows = data["rows"]
-        n_in, n_out = len(data["inputs"]), len(data["outputs"])
-    except (ValueError, KeyError, TypeError):
-        set_status("That doesn't look like a saved AnnaCode dataset.")
+    """Append the rows of a saved TSV to the current data. Returns how many were added (0 on a mismatch)."""
+    parsed = _parse_tsv(text)
+    if parsed is None:
+        set_status("That doesn't look like a saved AnnaCode TSV (a header line, then rows of numbers).")
         return 0
-    if n_in != len(state.inputs) or n_out != len(state.outputs):
-        set_status(f"That file has {n_in} input(s) and {n_out} output(s); your network has "
-                   f"{len(state.inputs)} and {len(state.outputs)}.")
+    n_cols, rows = parsed
+    n_in, n_out = len(state.inputs), len(state.outputs)
+    has_time = n_cols == n_in + n_out + 1      # a leading Time (s) column; files without one still load
+    if n_cols != n_in + n_out and not has_time:
+        set_status(f"That file has {n_cols} column(s); your network has {n_in} input(s) and {n_out} output(s), "
+                   f"so it needs {n_in + n_out} (plus an optional leading Time column).")
         return 0
+    # Loaded times continue after any points already there, so Save keeps one increasing time axis
+    existing = [p["t"] for p in state.training_data if "t" in p]
+    base = (max(existing) + SAMPLE_PERIOD) if existing else 0.0
     in_ids = [i["id"] for i in state.inputs]
     out_ids = [o["id"] for o in state.outputs]
     for r in rows:
-        add_point(dict(zip(in_ids, r["x"])), dict(zip(out_ids, r["y"])))
+        t = base + r[0] if has_time else None
+        if has_time:
+            r = r[1:]
+        add_point(dict(zip(in_ids, r[:n_in])), dict(zip(out_ids, r[n_in:])), t)
     set_status(f"Loaded {len(rows)} points.")
     return len(rows)
 
@@ -200,21 +235,21 @@ def save_dataset(evt=None):
     if not state.training_data:
         set_status("Nothing to save yet.")
         return
-    blob = js.Blob.new([dataset_to_json()], js.JSON.parse('{"type": "application/json"}'))
+    blob = js.Blob.new([dataset_to_tsv()], js.JSON.parse('{"type": "text/tab-separated-values"}'))
     url = js.URL.createObjectURL(blob)
     a = js.document.createElement("a")
     a.href = url
-    a.download = "annacode-data.json"
+    a.download = "annacode-data.tsv"
     a.click()
     js.URL.revokeObjectURL(url)
-    set_status(f"Saved {len(state.training_data)} points.")
+    set_status(f"Saved {len(state.training_data)} points (a TSV you can open in Excel).")
 
 async def _record_loop():
     while state.is_recording:
         xs = {i["id"]: _read("in", i["id"]) for i in state.inputs}
         ys = {o["id"]: _read("out", o["id"]) for o in state.outputs}
         if None not in xs.values() and None not in ys.values():
-            add_point(xs, ys)
+            add_point(xs, ys, time.monotonic())
         await asyncio.sleep(SAMPLE_PERIOD)
 
 def start_recording():

@@ -47,8 +47,8 @@ HELP.update({
     "undo": ("Brings back the points you just removed (or cleared). You can undo several times.", ""),
     "remove_zero": ("Deletes recorded points where every motor reads zero. Those are the moments the robot paused.", ""),
     "clear": ("Deletes all recorded points and the loss history. Undo can bring the points back.", ""),
-    "save": ("Downloads the recorded points as a file so you can keep a good run or share it.", ""),
-    "load": ("Adds the points from a saved file to the ones you have. The file needs the same number of inputs and outputs "
+    "save": ("Downloads the recorded points as a TSV file (tab-separated: a Time (s) column starting at 0, then one column per input and output, one row per point). Open it in Excel, or keep a good run to load again.", ""),
+    "load": ("Adds the points from a TSV file (one made by Save, or edited in Excel and saved as Text (Tab delimited)) to the ones you have. It needs a header row and the same number of inputs and outputs "
              "as your network. Press Clear first to replace instead of add.", ""),
     "example": ("Fills the plot with a noisy example curve (a line, V, sine wave and more) to practise on. It is either this "
                 "or Record: it is only available while there is no data. A hint below tells you how to shape the network.", ""),

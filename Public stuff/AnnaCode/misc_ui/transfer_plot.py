@@ -13,6 +13,7 @@ held at their current values; a dot marks the live point):
 import asyncio
 import json
 import js
+from pyscript import document
 from pyscript.js_modules import Plotly
 
 import state
@@ -252,9 +253,27 @@ def _update_collapse_note(xi_names: list[str]):
     note.innerHTML = ("With no activation, your layers collapse into one line per output: "
                       + "; ".join(lines) + ". An activation lets the lines bend so they can't be merged.")
 
+def _plot_hint_text() -> str:
+    """What the greyed-out plots should say: connect two devices first, then pick the input/output, then Run."""
+    if len(state.devices) < 2:   # a sensor and a motor
+        return "Connect 2 devices" if not state.devices else "Connect 1 more device"
+    missing = network_model.unchosen_io()
+    if missing:
+        ins = any(m.startswith("input") for m in missing)
+        outs = any(m.startswith("output") for m in missing)
+        return "Select input and output" if ins and outs else ("Select input" if ins else "Select output")
+    return "Hit Run"
+
+def update_plot_hints():
+    text = _plot_hint_text()
+    for el in document.querySelectorAll(".transfer-hint"):
+        if el.textContent != text:
+            el.textContent = text
+
 async def run_loop():
     while True:
         try:
+            update_plot_hints()
             if state.in_training_family():
                 import training_plot   # imported late: it imports this module for its label helper
                 training_plot.redraw()
