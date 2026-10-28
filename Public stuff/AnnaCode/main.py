@@ -138,10 +138,12 @@ def _place_example_select(in_input_box: bool):
         header = document.querySelector(".input-node .node-header")
         if header and sel.parentElement is not header:
             header.insertBefore(sel, header.firstChild)
+            header.insertBefore(state.get_id("save-icon-btn"), sel.nextSibling)
     else:
         home = state.get_id("record-btn").parentElement
         if sel.parentElement is not home:
             home.insertBefore(sel, home.firstChild)
+            home.insertBefore(state.get_id("save-icon-btn"), sel.nextSibling)
 
 def set_mode(mode: str):
     previous = state.mode
@@ -228,6 +230,10 @@ def _on_undo(evt):
 
 @when("click", "#save-data-btn")
 def _on_save(evt):
+    training.save_dataset()
+
+@when("click", "#save-icon-btn")
+def _on_save_icon(evt):
     training.save_dataset()
 
 @when("click", "#load-data-btn")

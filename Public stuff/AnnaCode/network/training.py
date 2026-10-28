@@ -11,6 +11,7 @@ units (a y-scale cannot be folded through a non-linear output).
 """
 import asyncio
 import math
+import re
 import time
 
 import random
@@ -239,7 +240,9 @@ def save_dataset(evt=None):
     url = js.URL.createObjectURL(blob)
     a = js.document.createElement("a")
     a.href = url
-    a.download = "annacode-data.tsv"
+    ex = EXAMPLES.get(state.example_key)
+    slug = re.sub(r"[^a-z0-9]+", "-", ex["label"].lower()).strip("-") if ex else ""
+    a.download = f"annacode-{slug}.tsv" if slug else "annacode-data.tsv"
     a.click()
     js.URL.revokeObjectURL(url)
     set_status(f"Saved {len(state.training_data)} points (a TSV you can open in Excel).")

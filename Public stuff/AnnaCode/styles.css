@@ -1185,5 +1185,11 @@ body.running #adv-plot { opacity: 1; filter: none; }
 
 /* Example curves live in Fitting now (in the input box); Training is for recorded data only */
 .training:not(.fitting) #example-select,
+.training:not(.fitting) #save-icon-btn,
 .training:not(.fitting) .train-or { display: none; }
 .fitting .zoom-control { display: flex !important; }
+
+.save-icon-btn { flex: none; display: none; padding: 4px 6px; line-height: 0; }
+.fitting .save-icon-btn { display: inline-flex; align-items: center; }
+.fitting .input-node .node-header { display: flex; align-items: center; gap: 4px; }
+.fitting .input-node .node-header .train-select { flex: 1; }
