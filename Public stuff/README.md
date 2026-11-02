@@ -34,3 +34,8 @@ subset of the class repo that's meant to be shared.
   [Open it online](https://chrisbuerginrogers.github.io/ME193-Robotics/Public%20stuff/QLearn/).
   Imported from
   [ceeoinnovations/FETLab-Summer-2026](https://github.com/ceeoinnovations/FETLab-Summer-2026/tree/main/QLearn-NewActivities-PyScript).
+- [reward-lab.html](reward-lab.html) — a single-page reward-design exercise:
+  a robot greedily takes the move with the best immediate reward, starting
+  with "straight-line distance to the goal". Predict where it gets stuck, run
+  it, then change the reward and see what happens. Open the file directly in a
+  browser, no install needed.
