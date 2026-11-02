@@ -1,5 +1,8 @@
 # AnnaCode
 
+### 👉 Click here to try it: [Builder](https://chrisbuerginrogers.github.io/ME193-Robotics/Public%20stuff/AnnaCode/) · [Trainer](https://chrisbuerginrogers.github.io/ME193-Robotics/Public%20stuff/AnnaCode/trainer.html)
+
+
 Two browser pages for building small neural networks and connecting them to
 LEGO Education hardware (motors, color sensor, controller). Nothing to
 install: Python runs in the page via [PyScript](https://pyscript.net).
