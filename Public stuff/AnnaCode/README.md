@@ -1,6 +1,6 @@
 # AnnaCode
 
-### 👉 Click here to try it: [Builder](https://chrisbuerginrogers.github.io/ME193-Robotics/Public%20stuff/AnnaCode/) · [Trainer](https://chrisbuerginrogers.github.io/ME193-Robotics/Public%20stuff/AnnaCode/trainer.html)
+### 👉 [Click here to try it](https://chrisbuerginrogers.github.io/ME193-Robotics/Public%20stuff/AnnaCode/)
 
 
 Two browser pages for building small neural networks and connecting them to
@@ -10,7 +10,7 @@ install: Python runs in the page via [PyScript](https://pyscript.net).
 | Page | What it does | Open |
 |---|---|---|
 | **Builder** (`index.html`) | Wire sensors into a network by hand and set the weights yourself. Outputs drive motors, lights and the beeper. | [Open](https://chrisbuerginrogers.github.io/ME193-Robotics/Public%20stuff/AnnaCode/) |
-| **Trainer** (`trainer.html`) | The same tool plus a dataset and training: collect examples from your hardware, train the network, and watch the fit and loss plots. | [Open](https://chrisbuerginrogers.github.io/ME193-Robotics/Public%20stuff/AnnaCode/trainer.html) |
+| **Trainer** (`trainer.html`) | The same tool plus a dataset and training: collect examples from your hardware, train the network, and watch the fit and loss plots. | *(no longer used)* |
 
 ## What you need
 

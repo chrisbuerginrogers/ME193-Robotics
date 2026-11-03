@@ -3,8 +3,8 @@
 ### 👉 Click here to try it
 
 - [Q-Learning Visualizer](https://chrisbuerginrogers.github.io/ME193-Robotics/Public%20stuff/QLearn/) — train a robot with Q-learning
-- [Reward Lab](https://chrisbuerginrogers.github.io/ME193-Robotics/Public%20stuff/reward-lab.html) — design a reward and watch where a robot gets stuck
-- [AnnaCode Builder](https://chrisbuerginrogers.github.io/ME193-Robotics/Public%20stuff/AnnaCode/) and [Trainer](https://chrisbuerginrogers.github.io/ME193-Robotics/Public%20stuff/AnnaCode/trainer.html) — neural networks on LEGO hardware
+- [Reward Lab](https://chrisbuerginrogers.github.io/ME193-Robotics/Public%20stuff/reward-lab/) — design a reward and watch where a robot gets stuck
+- [AnnaCode Builder](https://chrisbuerginrogers.github.io/ME193-Robotics/Public%20stuff/AnnaCode/) — neural networks on LEGO hardware
 - [Kernels](https://chrisbuerginrogers.github.io/ME193-Robotics/Public%20stuff/Kernels/) — explore image convolution
 - [MQTT Debugging console](https://chrisbuerginrogers.github.io/ME193-Robotics/Public%20stuff/Debugging/)
 
@@ -42,7 +42,7 @@ subset of the class repo that's meant to be shared.
   [Open it online](https://chrisbuerginrogers.github.io/ME193-Robotics/Public%20stuff/QLearn/).
   Imported from
   [ceeoinnovations/FETLab-Summer-2026](https://github.com/ceeoinnovations/FETLab-Summer-2026/tree/main/QLearn-NewActivities-PyScript).
-- [reward-lab.html](reward-lab.html) — a single-page reward-design exercise:
+- [reward-lab/](reward-lab/) — a single-page reward-design exercise:
   a robot greedily takes the move with the best immediate reward, starting
   with "straight-line distance to the goal". Predict where it gets stuck, run
-  it, then change the reward and see what happens. [Try it online](https://chrisbuerginrogers.github.io/ME193-Robotics/Public%20stuff/reward-lab.html), no install needed.
+  it, then change the reward and see what happens. [Try it online](https://chrisbuerginrogers.github.io/ME193-Robotics/Public%20stuff/reward-lab/), no install needed.
