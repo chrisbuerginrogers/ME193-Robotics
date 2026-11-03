@@ -34,9 +34,16 @@ echo "$PY_MODULE" > "$VENV/python_module"   # so 05_job.sbatch loads the same py
 source "$VENV/bin/activate"
 python -m pip install --no-cache-dir --upgrade pip
 # --no-cache-dir: pip would otherwise keep a second copy of every download in ~/.cache (several GB of your quota).
+# The cluster's GPU driver is CUDA 12.9, but the newest PyTorch and Warp on PyPI are built for CUDA 13 and fail with
+# "NVIDIA driver too old". So install the CUDA 12 builds FIRST (torch 2.11 from PyTorch's cu128 index; warp 1.14);
+# mjlab accepts them (torch>=2.7, warp>=1.14) and so does not fetch the CUDA 13 ones.
+python -m pip install --no-cache-dir "torch==2.11.0+cu128" "torchvision==0.26.0+cu128" \
+    --index-url https://download.pytorch.org/whl/cu128 --extra-index-url https://pypi.org/simple
+python -m pip install --no-cache-dir "warp-lang==1.14.0"
 # --only-binary mujoco: never compile MuJoCo from source (needs MUJOCO_PATH and a C++ toolchain).
 python -m pip install --no-cache-dir --only-binary mujoco mjlab numpy imageio imageio-ffmpeg
 python -m pip check
-python -c "import mujoco, mjlab; print('mujoco', mujoco.__version__, '+ mjlab installed in', '$VENV')"
+python -c "import torch; assert torch.version.cuda.startswith('12'), 'wrong PyTorch build: ' + torch.version.cuda"
+python -c "import mujoco, mjlab, torch; print('mujoco', mujoco.__version__, '+ mjlab, torch', torch.__version__, 'installed in', '$VENV')"
 echo; echo "Next: python 04_test_mujoco.py   (quick, on the login node)"
 echo "Then: sbatch 05_job.sbatch        (real test, on a compute node)"

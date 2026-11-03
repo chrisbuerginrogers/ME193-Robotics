@@ -14,11 +14,10 @@ mjlab trains only on an NVIDIA GPU, so training runs on the cluster. (On a Mac i
 
 Everything runs from your laptop with `runIt.py`, in the `mujoco-hpc` folder (venv active, VPN on if off campus).
 
-## 1. Install (once)
+## 1. Install
 
-`python3 setup.py` installs mjlab into `~/mujoco-env` on the cluster along with MuJoCo. It is about 6 GB of your 28 GB
-home quota, so check `quota -s` first and free space with `python3 cleanup.py` if you are short. If you set up the
-cluster before mjlab was added, rerun `python3 setup.py --reinstall`.
+Nothing extra: `python3 setup.py` (the same setup as the bouncing-ball demo) already installed mjlab on the cluster.
+If you set up before mjlab was added, rerun `python3 setup.py --reinstall`.
 
 ## 2. Check the task loads (short run)
 
@@ -61,6 +60,13 @@ python play.py Drive-Straight --checkpoint-file runs/<name>/logs/rsl_rl/drive_st
 - **Make it harder:** raise `START_YAW`, or add friction and mass randomization (mjlab's `mjlab.envs.mdp.dr`) so the
   policy copes with the jerkiness of your rod wheels and not one exact friction value.
 
-## Not tested
+## What to expect
 
-This task was written against mjlab's source but has **not been run yet**. Expect to fix a typo or two at step 2. Please report what you had to change.
+A full run (4096 robots, 500 iterations) takes about 3 to 4 minutes on a Pax GPU node. The `Mean reward` printed each
+iteration starts near -0.1 and climbs to about +2. `Episode_Reward/forward_speed` rises as it learns to drive, and the
+`face_forward` and `stay_on_line` penalties stay small. Nobody has watched the trained robot drive yet, so treat the
+numbers as a sign that it is learning, and check the result with step 4.
+
+Tested once on Pax (GPU node `pax050`, mjlab 1.6.0, torch 2.11 for CUDA 12.8, warp 1.14). The cluster's GPU driver is
+CUDA 12.9, which is why `03_setup_env.sh` swaps in CUDA 12 builds of PyTorch and Warp. If you see "NVIDIA driver is too
+old", that swap did not happen: rerun `python3 setup.py --reinstall`.

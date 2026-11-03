@@ -99,8 +99,22 @@ Every run writes a log of every command and its output to `logs/`. **Send the ne
 | Job `FAILED` | Read the job output printed by `runIt.py` (or `python3 status.py <JOBID>`); the traceback is usually in the last lines. |
 | `TIMEOUT` | The job hit its time limit. Raise `--time`. |
 | `PartitionNotFound` / `InvalidQOS` | Wrong queue name. Use `--partition` with a name from `sinfo -s` on the cluster. |
-| Quota warnings on the cluster | Home folders are limited (about 28 GB). Delete old folders in `~/mujoco-hpc/runs/` on the cluster. |
+| Quota warnings on the cluster | Home folders are limited (about 28 GB). Run `python3 cleanup.py` to delete old runs and caches. |
+| `NVIDIA driver ... too old` when training | The wrong (CUDA 13) PyTorch is installed. Run `python3 setup.py clean` to start from scratch. |
 | `libEGL warning` lines | Harmless noise from rendering without a display, as long as the next line says `PASS render`. |
+
+### Back to factory settings
+
+If the cluster setup is broken beyond repair, or you want to begin again:
+```
+python3 setup.py clean --dry-run   # only shows what would be deleted
+python3 setup.py clean
+```
+`clean` deletes, **on the cluster**, the Python environment `~/mujoco-env`, the `~/mujoco-hpc` folder with every run in
+it, `~/.cache`, and `~/Simulations`; and it empties `runs/`, `results/` and `logs/` **on your laptop**. It shows the sizes,
+and you must type `factory reset` before anything is deleted. It will not run while you have jobs queued or running
+(cancel them with `scancel -u $USER`). Add `--keep-simulations` if `~/Simulations` holds anything of yours. When it
+has deleted everything it runs the whole setup again from scratch. Files outside those folders are never touched.
 
 ## Windows
 
@@ -119,7 +133,7 @@ Running the scripts in plain Windows stops with these instructions.
 | File | Purpose |
 |---|---|
 | `config.sh` | Your username and the cluster address. The only thing to edit. |
-| `setup.py`, `runIt.py`, `status.py`, `hpc.py` | The commands above, and the shared code they use (ssh, rsync, Slurm, logging). |
+| `setup.py`, `runIt.py`, `status.py`, `hpc.py` | The commands above, and the shared code they use (ssh, rsync, Slurm, logging). `python3 setup.py clean` resets everything. |
 | `cleanup.py` | Shows your cluster disk quota, deletes old job results and caches, shows the quota again. |
 | `04_test_mujoco.py` | The smoke test `setup.py` runs on the cluster (physics, plus a rendering check). |
 | `05_job.sbatch`, `06_gpu_job.sbatch` | Slurm job scripts for the CPU and GPU tests. |

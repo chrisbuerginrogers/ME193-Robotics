@@ -110,9 +110,12 @@ def heading_and_offset(env: ManagerBasedRlEnv) -> torch.Tensor:
 
 
 def forward_speed(env: ManagerBasedRlEnv) -> torch.Tensor:
-  """Reward for going along +x at TARGET_SPEED (1 at the target, falling off either side)."""
+  """Reward for going along +x at TARGET_SPEED: 0 when standing still, 1 at the target, less beyond it, negative backwards.
+
+  It slopes everywhere (a narrow bump around the target would give a robot that starts out still nothing to learn from).
+  """
   vx = env.scene["robot"].data.root_link_lin_vel_w[:, 0]
-  return torch.exp(-torch.square(vx - TARGET_SPEED) / 0.1**2)
+  return torch.clamp(1.0 - torch.square((vx - TARGET_SPEED) / TARGET_SPEED), min=-1.0)
 
 
 def stay_on_line(env: ManagerBasedRlEnv) -> torch.Tensor:
@@ -220,6 +223,7 @@ def drive_straight_ppo_runner_cfg() -> RslRlOnPolicyRunnerCfg:
       max_grad_norm=1.0,
     ),
     experiment_name="drive_straight",
+    logger="tensorboard",           # the default, wandb, needs an account and a login
     save_interval=50,
     num_steps_per_env=24,
     max_iterations=500,
