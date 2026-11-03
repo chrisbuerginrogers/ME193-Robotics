@@ -56,14 +56,16 @@ The copy of `drive_task.py` inside each `runs/train-*/` folder is a snapshot of 
 
 ## Results so far
 
-| Training | Forward in 10 s | Sideways (y) | Heading |
+| Robot and training | Forward in 10 s | Sideways (y) | Heading |
 |---|---|---|---|
-| 500 iterations | 1.15 m | down to -0.5 m | wanders -43 to +38 degrees |
-| 2000 iterations | 1.05 m | within about 0.25 m | within about 27 degrees |
+| Sample robot (8 cm wheels), 300 iterations | 4.7 m (0.5 m/s) | within 0.1 m | within 2 degrees |
+| Author's rod-wheel robot, 500 iterations | 1.15 m | down to -0.5 m | wanders -43 to +38 degrees |
+| Author's rod-wheel robot, 2000 iterations | 1.05 m | within about 0.25 m | within about 27 degrees |
 
-It crawls at about 0.1 m/s and keeps close to the line but still wobbles. The `TARGET_SPEED` of 0.5 m/s is more than this
-robot can do (driving both wheels at 8 rad/s by hand moves it only about 0.03 m/s), so the speed reward just keeps paying
-for more speed.
+The sample robot drives straight at the target speed after about a minute of training. The author's own robot, with jerky
+rod wheels, crawls at about 0.1 m/s and still wobbles. The `TARGET_SPEED` of 0.5 m/s suits the sample robot but is more than
+the rod-wheel robot can do (driving both wheels at 8 rad/s by hand moves it only about 0.03 m/s), so for that robot the
+speed reward just keeps paying for more speed.
 
 ## Ideas for next time
 

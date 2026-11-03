@@ -83,14 +83,17 @@ A run of 4096 robots takes about 3 to 4 minutes for 500 iterations and about 13 
 
 Results from the movies (10 seconds, starting pointing 0.4 radians off-axis):
 
-| Training | Distance forward | Sideways (y) | Heading |
+| Robot and training | Distance forward | Sideways (y) | Heading |
 |---|---|---|---|
-| 500 iterations | 1.15 m | down to -0.5 m, ends -0.13 m | wanders between -43 and +38 degrees |
-| 2000 iterations | 1.05 m | stays within about 0.25 m | stays within about 27 degrees |
+| **Sample robot** (the one in `onshape/` until you export your own), 300 iterations | 4.7 m (0.5 m/s, the target speed) | within 0.1 m | within 2 degrees |
+| Author's own Onshape robot with rod wheels, 500 iterations | 1.15 m | down to -0.5 m, ends -0.13 m | wanders between -43 and +38 degrees |
+| Author's own Onshape robot with rod wheels, 2000 iterations | 1.05 m | stays within about 0.25 m | stays within about 27 degrees |
 
-So it learns to crawl forward at about 0.1 m/s (three times faster than the hand-driven plan in `drive.py`) and to keep
-close to the line, but it still wobbles in heading: the robot's rod wheels are jerky, which is hard to control. More
-training helps; so do the Tuning ideas above (a gentler `WHEEL_TORQUE_LIMIT`, heavier steering penalties).
+With the sample robot the mean reward reaches about +9.8 within 150 iterations (about a minute) and the robot drives
+straight at the target speed. Your own robot will do better or worse depending on its wheels: the author's rod wheels are
+jerky and slippery, so it crawls at about 0.1 m/s (three times faster than the hand-driven plan in `drive.py`) and still
+wobbles in heading. For a robot like that, more training helps, and so do the Tuning ideas above (a gentler
+`WHEEL_TORQUE_LIMIT`, heavier steering penalties, a lower `TARGET_SPEED`).
 
 Tested on Pax (GPU node `pax050`, mjlab 1.6.0, torch 2.11 for CUDA 12.8, warp 1.14). The cluster's GPU driver is CUDA
 12.9, which is why `03_setup_env.sh` installs CUDA 12 builds of PyTorch and Warp. If you see "NVIDIA driver is too old",
