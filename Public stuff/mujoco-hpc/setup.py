@@ -25,6 +25,7 @@ from pathlib import Path
 
 from hpc import HERE, Cluster, StepFailed
 
+SCRIPTS = HERE / "scripts"
 FILES = ["02_check_cluster.sh", "03_setup_env.sh", "04_test_mujoco.py", "05_job.sbatch", "06_gpu_job.sbatch",
          "08_demo.py", "08_demo.sbatch"]
 results = []
@@ -146,7 +147,7 @@ def main():
         record("ssh login", True, out.strip())
 
         print("3. Copy files to the cluster")
-        c.push([HERE / f for f in FILES if (HERE / f).exists()], c.dir)
+        c.push([SCRIPTS / f for f in FILES if (SCRIPTS / f).exists()], c.dir)   # lands flat in ~/mujoco-hpc
         record("copy files", True, f"-> {c.dir}")
 
         print("4. Survey the cluster (slurm, partitions, python, disk)")
@@ -186,7 +187,7 @@ def main():
         print("\n==== Summary ====")
         for name, ok, detail in results:
             print(f"{'PASS' if ok else 'FAIL'}  {name}")
-        print("\nAll good. Next: python3 runIt.py --gpu 08_demo.py" if not bad else "\nSomething failed.")
+        print("\nAll good. Next: python3 runIt.py --gpu scripts/08_demo.py" if not bad else "\nSomething failed.")
         print(f"Full log: {c.logpath}")
     sys.exit(1 if [r for r in results if not r[1]] else 0)
 

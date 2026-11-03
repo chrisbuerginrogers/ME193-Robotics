@@ -13,6 +13,8 @@ mjlab trains only on an NVIDIA GPU, so training runs on the cluster. (On a Mac i
 | `make_video.py` | Records a movie of a trained policy on the cluster (step 4) |
 | `train.sbatch` | A Slurm job that trains on a GPU, for running by hand on the cluster |
 
+How it works in plain words, with the rewards and the words used (policy, iteration, checkpoint): [../docs/how-drive-straight-works.md](../docs/how-drive-straight-works.md).
+
 Everything runs from your laptop with `runIt.py`, in the `mujoco-hpc` folder (venv active, VPN on if off campus).
 
 ## 1. Install

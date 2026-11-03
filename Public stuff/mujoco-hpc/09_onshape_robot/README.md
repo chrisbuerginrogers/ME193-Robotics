@@ -4,6 +4,18 @@ You will design a small robot in Onshape (a box with two wheels), turn it into a
 and drive it in a simulation on the cluster. The cluster setup in `../README.md` must already work
 (`python3 setup.py` all PASS).
 
+## What is in this folder
+
+| Path | What it is |
+|---|---|
+| `README.md` | This guide: design the robot in Onshape, export it, drive it. |
+| `drive.py` | Drives the robot with a fixed plan (forward, spin, curve) and films it. |
+| `.env.example` | Template for your Onshape keys. Copy it to `.env` and fill it in (`.env` stays out of git). |
+| `onshape/` | The robot: `config.json` (which Onshape document), and the exported `robot.xml`, `scene.xml`, `assets/`. A hand-written sample robot is there until you export your own. |
+| `sample/` | A copy of that sample robot, to fall back on. |
+| `mjlab_task/` | Teach the robot to drive straight with reinforcement learning (own README). |
+| `docs/` | How the Drive-Straight training works, in plain words. |
+
 ## First, a word about file formats
 
 MuJoCo reads **MJCF**, its own XML format. **URDF** is a different XML format that comes from ROS (the robot
