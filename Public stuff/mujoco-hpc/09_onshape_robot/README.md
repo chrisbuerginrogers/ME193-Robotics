@@ -87,10 +87,14 @@ Do this once on your laptop.
    (If the tool says it cannot find the keys, run these three as `export NAME=value` in your terminal instead.)
 4. Open `onshape/config.json` and paste the browser address of your Onshape document (the tab with your assembly) in place of
    the placeholder. Leave `assembly_name` as `robot` if that is what you called the assembly.
-5. From the `09_onshape_robot` folder run:
+5. Activate the Python virtual environment you installed `onshape-to-robot` into (skip this if you installed it
+   system-wide), then from the `09_onshape_robot` folder run:
    ```
+   source ../.venv/bin/activate
    onshape-to-robot onshape
    ```
+   (On Windows the activate line is `..\.venv\Scripts\activate`.) Your prompt shows `(.venv)` when it is active; if you get
+   `command not found: onshape-to-robot`, the environment is not active.
    `onshape/` now has `robot.xml`, `scene.xml` and `assets/` (replacing the sample `robot.xml` and `scene.xml` that
    were there). You will see `Unknown joint type: continuous`: that is harmless, the wheels are written as ordinary
    hinge joints with no angle limits. A warning `part wheel has no dynamics` means the wheel has no material in

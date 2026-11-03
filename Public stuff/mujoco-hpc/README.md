@@ -120,10 +120,11 @@ Running the scripts in plain Windows stops with these instructions.
 |---|---|
 | `config.sh` | Your username and the cluster address. The only thing to edit. |
 | `setup.py`, `runIt.py`, `status.py`, `hpc.py` | The commands above, and the shared code they use (ssh, rsync, Slurm, logging). |
+| `cleanup.py` | Shows your cluster disk quota, deletes old job results and caches, shows the quota again. |
 | `04_test_mujoco.py` | The smoke test `setup.py` runs on the cluster (physics, plus a rendering check). |
 | `05_job.sbatch`, `06_gpu_job.sbatch` | Slurm job scripts for the CPU and GPU tests. |
 | `08_demo.py`, `08_demo.sbatch` | The bouncing-ball demo and its job script (for the by-hand route). |
-| `09_onshape_robot/` | Second demo: build a robot in Onshape, export it, drive it. Has its own README. |
+| `09_onshape_robot/` | Second demo: build a robot in Onshape, export it, drive it. Has its own README. `mjlab_task/` inside trains it to drive straight with reinforcement learning. |
 | `02_check_cluster.sh`, `03_setup_env.sh` | Cluster-side survey and installer, run by `setup.py`. |
 | `00_...`, `01_...`, `01b_login.sh`, `08b_fetch_results.sh`, `activate.sh` | The by-hand route, below. |
 | `logs/`, `runs/`, `results/` | Created as you work: logs, and results copied back from the cluster. |
@@ -131,7 +132,17 @@ Running the scripts in plain Windows stops with these instructions.
 What the setup found on the cluster (Tufts "Pax"): login node `login.pax.tufts.edu`; Slurm queues `batch`
 (CPU) and `gpu` (NVIDIA A100 nodes); Python 3.13 via `module load python/3.13.2` (the system Python 3.9 is too old
 for MuJoCo, so the installer loads the newer one automatically); no preinstalled MuJoCo, so each user
-gets their own in `~/mujoco-env`.
+gets their own in `~/mujoco-env`. That environment includes mjlab and PyTorch and takes about 6 GB of your
+home quota (28 GB on Pax). Check it with `quota -s`, and free space with `python3 cleanup.py`.
+
+## Logging in to the cluster yourself
+
+`python3 setup.py` adds a shortcut to your `~/.ssh/config` the first time it runs, so from then on this opens a terminal
+on the cluster (same login as the scripts, so no new password prompt while their connection is open):
+```
+ssh hpc
+```
+Type `exit` to come back to your laptop. Useful for `quota -s` (your disk space) and `squeue -u $USER` (your jobs).
 
 ## Doing it by hand (optional)
 
@@ -145,7 +156,7 @@ Scripts marked *laptop* run in a terminal on your computer; *cluster* in a termi
 | 2 | laptop | `./01_push_and_check.sh` | files copy over; runs the survey (step 3) too |
 | 2.5 | laptop, 2nd terminal | `./01b_login.sh` | you are logged in, in `~/mujoco-hpc` (VSCode: **+** in the terminal panel) |
 | 3 | cluster | `bash 02_check_cluster.sh` | Slurm, queues, Python, modules, disk, pip reachable |
-| 4 | cluster | `bash 03_setup_env.sh` | MuJoCo, numpy, imageio, imageio-ffmpeg install into `~/mujoco-env` |
+| 4 | cluster | `bash 03_setup_env.sh` | MuJoCo, mjlab (with PyTorch), numpy, imageio, imageio-ffmpeg install into `~/mujoco-env` |
 | 5 | cluster | `source ~/mujoco-env/bin/activate`, then `python 04_test_mujoco.py` | MuJoCo imports and simulates |
 | 6 | cluster | `sbatch 05_job.sbatch` | same test on a compute node via Slurm |
 | 7 | cluster | `sbatch 06_gpu_job.sbatch` | a GPU node is allocated and EGL rendering works |

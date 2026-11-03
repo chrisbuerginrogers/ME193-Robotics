@@ -4,13 +4,17 @@
     python3 setup.py --skip-gpu   # no GPU job
     python3 setup.py --reinstall  # rebuild ~/mujoco-env on the cluster
 
-Run it from this folder, on your laptop (off campus: connect the VPN first). It prints
+Run it from this folder, on your laptop (off campus: connect the VPN first). Its first step adds a `Host hpc` entry to
+~/.ssh/config (if there is not one), so that afterwards `ssh hpc` logs you in to the cluster. It prints
 PASS/FAIL for each step and writes everything to logs/setup-<time>.log. If a step fails,
 send that log file to whoever is helping you.
 """
 import argparse
+import os
+import re
 import socket
 import sys
+from pathlib import Path
 
 from hpc import HERE, Cluster, StepFailed
 
@@ -24,6 +28,21 @@ def record(name, ok, detail=""):
     print(f"  {'PASS' if ok else 'FAIL'}: {name} {detail}")
 
 
+def ensure_ssh_alias(c):
+    """Add a `Host hpc` entry to ~/.ssh/config (once), so that `ssh hpc` logs you in to the cluster."""
+    cfg = Path.home() / ".ssh" / "config"
+    old = cfg.read_text() if cfg.exists() else ""
+    if re.search(r"^\s*Host\s+(.*\s)?hpc(\s|$)", old, re.M):
+        return False
+    block = (f"Host hpc\n    HostName {c.host}\n    User {c.user}\n"
+             "    ControlMaster auto\n    ControlPath ~/.ssh/sockets/%r@%h\n    ControlPersist 10m\n")
+    cfg.parent.mkdir(mode=0o700, exist_ok=True)
+    with open(cfg, "a") as f:
+        f.write(("\n" if old and not old.endswith("\n") else "") + ("\n" if old else "") + block)
+    os.chmod(cfg, 0o600)
+    return True
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--skip-gpu", action="store_true")
@@ -35,6 +54,11 @@ def main():
     c = Cluster("setup")
     print(f"log file: {c.logpath}\n")
     try:
+        print("0. Shortcut for logging in")
+        added = ensure_ssh_alias(c)
+        record("ssh alias", True, "added to ~/.ssh/config: from now on `ssh hpc` logs you in to the cluster"
+               if added else "(`ssh hpc` is already set up)")
+
         print("1. Network")
         try:
             socket.getaddrinfo(c.host, 22)
@@ -58,10 +82,10 @@ def main():
         record("slurm available", "MISSING: sbatch" not in out)
         record("pip can reach the internet", "FAIL: cannot reach pypi" not in out)
 
-        print("5. MuJoCo environment (~/mujoco-env)")
+        print("5. MuJoCo + mjlab environment (~/mujoco-env; the mjlab download is large, several minutes)")
         have_env = False
         if not args.reinstall:
-            rc, _ = c.ssh("~/mujoco-env/bin/python -c 'import mujoco, imageio_ffmpeg'", check=False, show=False)
+            rc, _ = c.ssh("~/mujoco-env/bin/python -c 'import mujoco, mjlab, imageio_ffmpeg'", check=False, show=False)
             have_env = rc == 0
         if have_env:
             record("environment already installed", True, "(use --reinstall to rebuild)")
