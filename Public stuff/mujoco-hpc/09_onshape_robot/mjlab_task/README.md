@@ -10,6 +10,7 @@ mjlab trains only on an NVIDIA GPU, so training runs on the cluster. (On a Mac i
 |---|---|
 | `drive_task.py` | The task: robot, rewards, resets. **Tune this one.** |
 | `train.py`, `play.py` | mjlab's own train/play commands, with our task registered first |
+| `make_video.py` | Records a movie of a trained policy on the cluster (step 4) |
 | `train.sbatch` | A Slurm job that trains on a GPU, for running by hand on the cluster |
 
 Everything runs from your laptop with `runIt.py`, in the `mujoco-hpc` folder (venv active, VPN on if off campus).
@@ -31,42 +32,64 @@ message says what to fix in `drive_task.py` (see Tuning).
 
 ## 3. Train
 
-Same command with more robots and time (`runIt.py` waits until the job ends, so keep the terminal open):
+Same command with more robots and time (`runIt.py` waits until the job ends, so keep the terminal open). A few minutes
+is enough to see it learn; add `--agent.max-iterations 2000` (about 13 minutes, use `--time 00:45:00`) for a better driver:
 ```
-python3 runIt.py --gpu --time 01:00:00 --mem 16G --cpus 4 \
+python3 runIt.py --gpu --time 00:15:00 --mem 16G --cpus 4 \
   --with 09_onshape_robot/mjlab_task/drive_task.py --with 09_onshape_robot/onshape \
   09_onshape_robot/mjlab_task/train.py Drive-Straight --env.scene.num-envs 4096
 ```
-The logs and checkpoints (`model_<n>.pt`, saved every 50 of 500 iterations) come back to
-`runs/<name>/logs/rsl_rl/drive_straight/<date>/` on your laptop.
+The logs and checkpoints (`model_<n>.pt`, saved every 50 iterations) come back to
+`runs/train-<time>/logs/rsl_rl/drive_straight/<date>/` on your laptop. The last one is `model_499.pt` for the default 500
+iterations, `model_1999.pt` for 2000.
 
-## 4. Watch the result
+## 4. Watch the result: a movie made on the cluster
 
-mjlab can play a trained policy on a Mac (it only cannot train there). Install it in your laptop venv, copy
-`09_onshape_robot/mjlab_task/drive_task.py` next to `play.py`, and run:
+`make_video.py` loads a checkpoint, drives one robot for 10 seconds on a GPU node, records an `.mp4`, and prints where the
+robot is each second (x forward, y sideways, heading; straight driving keeps y and heading near 0). `runIt.py` brings the
+movie home and opens it. Send it your checkpoint with a third `--with` (find the file with `ls runs/train-*/logs/rsl_rl/drive_straight/*/`):
 ```
-python3 -m pip install mjlab
-python play.py Drive-Straight --checkpoint-file runs/<name>/logs/rsl_rl/drive_straight/<date>/model_499.pt
+python3 runIt.py --gpu --time 00:10:00 --mem 16G --cpus 4 \
+  --with 09_onshape_robot/mjlab_task/drive_task.py --with 09_onshape_robot/onshape \
+  --with runs/train-XXXXXXXX-XXXXXX/logs/rsl_rl/drive_straight/XXXX-XX-XX_XX-XX-XX/model_499.pt \
+  09_onshape_robot/mjlab_task/make_video.py model_499.pt
 ```
+Do not type the `X`s. They stand for the folder names in your own `runs/` folder: type `runs/train-` and press Tab to
+complete each name. Use the checkpoint name you have (`model_1999.pt` if you trained 2000 iterations) in both places.
+
+Optional, watching live on your Mac instead: mjlab's `play.py` needs **Python 3.11 to 3.13** (with 3.14 pip only finds a
+very old mjlab and it fails with `No module named 'mjlab.actuator'`). Make an environment with Python 3.13
+(`python3.13 -m venv ~/mjlab-play`, activate it, `python -m pip install mjlab`) and run `python play.py Drive-Straight
+--checkpoint-file <your model file>` from this folder. You do not need this for the movie.
 
 ## Tuning (all in `drive_task.py`)
 
 - **Wheels barely turn or the robot crawls:** raise `WHEEL_KD` or `WHEEL_TORQUE_LIMIT`. The motor pushes with
-  `WHEEL_KD * (asked speed - actual speed)` N*m, capped at the limit. Start by checking that `play.py --agent random`
-  looks lively.
+  `WHEEL_KD * (asked speed - actual speed)` N*m, capped at the limit.
 - **Robot jerks and flips:** lower `WHEEL_TORQUE_LIMIT`, or make the `action_rate` reward weight more negative.
-- **It drives straight but slowly:** raise `TARGET_SPEED`. It is rewarded for matching that speed, not for going faster.
+- **It drives straight but slowly:** `TARGET_SPEED` (0.5 m/s) is far more than this robot can do (driving both wheels at
+  8 rad/s by hand in `drive.py` moves it about 0.03 m/s), so the reward simply keeps paying for more speed. Lower it to
+  about 0.15 if you want it to hold a steady speed, or raise `MAX_WHEEL_SPEED` and the wheel torque to go faster.
 - **It wiggles along the line:** raise the `stay_on_line` and `face_forward` weights, lower `START_YAW`.
 - **Make it harder:** raise `START_YAW`, or add friction and mass randomization (mjlab's `mjlab.envs.mdp.dr`) so the
   policy copes with the jerkiness of your rod wheels and not one exact friction value.
 
 ## What to expect
 
-A full run (4096 robots, 500 iterations) takes about 3 to 4 minutes on a Pax GPU node. The `Mean reward` printed each
-iteration starts near -0.1 and climbs to about +2. `Episode_Reward/forward_speed` rises as it learns to drive, and the
-`face_forward` and `stay_on_line` penalties stay small. Nobody has watched the trained robot drive yet, so treat the
-numbers as a sign that it is learning, and check the result with step 4.
+A run of 4096 robots takes about 3 to 4 minutes for 500 iterations and about 13 minutes for 2000 on a Pax GPU node.
+`Mean reward` starts near -0.1 and reaches about +2 after 500 iterations and about +2.6 after 2000.
 
-Tested once on Pax (GPU node `pax050`, mjlab 1.6.0, torch 2.11 for CUDA 12.8, warp 1.14). The cluster's GPU driver is
-CUDA 12.9, which is why `03_setup_env.sh` swaps in CUDA 12 builds of PyTorch and Warp. If you see "NVIDIA driver is too
-old", that swap did not happen: rerun `python3 setup.py --reinstall`.
+Results from the movies (10 seconds, starting pointing 0.4 radians off-axis):
+
+| Training | Distance forward | Sideways (y) | Heading |
+|---|---|---|---|
+| 500 iterations | 1.15 m | down to -0.5 m, ends -0.13 m | wanders between -43 and +38 degrees |
+| 2000 iterations | 1.05 m | stays within about 0.25 m | stays within about 27 degrees |
+
+So it learns to crawl forward at about 0.1 m/s (three times faster than the hand-driven plan in `drive.py`) and to keep
+close to the line, but it still wobbles in heading: the robot's rod wheels are jerky, which is hard to control. More
+training helps; so do the Tuning ideas above (a gentler `WHEEL_TORQUE_LIMIT`, heavier steering penalties).
+
+Tested on Pax (GPU node `pax050`, mjlab 1.6.0, torch 2.11 for CUDA 12.8, warp 1.14). The cluster's GPU driver is CUDA
+12.9, which is why `03_setup_env.sh` installs CUDA 12 builds of PyTorch and Warp. If you see "NVIDIA driver is too old",
+that did not happen: run `python3 setup.py clean` to start from scratch.
