@@ -1,0 +1,6 @@
+name = "LQR-MPC"
+packages = ["numpy"]
+
+[files]
+"./lqrmpc.py" = ""
+"./ui.py" = ""

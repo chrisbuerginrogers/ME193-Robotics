@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LQR &amp; MPC line follower</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="site-nav">
+ <a href="index.html" class="active">Home</a><a href="simulate.html">Simulator</a><a href="lqr.html">LQR</a><a href="mpc.html">MPC</a><a href="robot.html">🔌 Robot</a><a href="reader.html?src=notes/index.md">Notes</a>
+</div>
+<main>
+<h1>LQR and MPC for a line-following robot</h1>
+<p class="lede">Two ways to steer a two-wheeled robot along a line: a feedback law worked out once on paper (LQR), and a small optimization re-solved at every step (MPC). Everything runs in your browser as Python and numpy through PyScript, so there is nothing to install. You can explore everything in simulation, then connect a LEGO Education robot over Bluetooth on the Robot page.</p>
+<div class="cards">
+ <a class="card" href="simulate.html"><b>Simulator</b><span>LQR and MPC drive the same track. Move the weights, speed and horizon and see where each one goes blind.</span></a>
+ <a class="card" href="lqr.html"><b>LQR</b><span>The gains, the damping, the three sensor states, and why a fixed gain fails on a sharp turn.</span></a>
+ <a class="card" href="mpc.html"><b>MPC</b><span>One solve, candidate by candidate, and how a long horizon turns into LQR.</span></a>
+ <a class="card" href="robot.html"><b>🔌 Robot</b><span>Connect a LEGO Education Double Motor and Color Sensor, calibrate, and run bang-bang, PD, LQR or MPC on a real line.</span></a>
+ <a class="card" href="reader.html?src=notes/index.md"><b>Notes</b><span>The worked maths: the model, LQR, MPC, and the difference between them.</span></a>
+</div>
+<p class="note" style="margin-top:22px">The first page you open takes about ten seconds to load Python. After that it is quick. The simulator is <a href="lqrmpc.py">lqrmpc.py</a>, about 250 lines of numpy.</p>
+</main>
+</body>
+</html>
