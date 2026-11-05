@@ -14,7 +14,7 @@ import traceback
 
 import numpy as np
 from pyodide.ffi import create_proxy
-from pyscript import document
+from pyscript import document, window
 
 import lqrmpc as m
 from ui import chart, el, slider
@@ -281,6 +281,7 @@ def wire_editors():
         if area is not None:
             area.value = source["text"]
             areas.append(area)
+            window.refreshCode(area)
 
     def make_input(area):
         def on_input(event):
@@ -288,6 +289,7 @@ def wire_editors():
             for other in areas:
                 if other is not area:
                     other.value = area.value
+                    window.refreshCode(other)
         return on_input
 
     def make_keys(area):
@@ -298,6 +300,7 @@ def wire_editors():
                 area.value = area.value[:start] + "    " + area.value[area.selectionEnd:]
                 area.selectionStart = area.selectionEnd = start + 4
                 source["text"] = area.value
+                window.refreshCode(area)
         return on_key
 
     for i in range(boxes.length):
@@ -308,13 +311,12 @@ def wire_editors():
         editor = box.querySelector(".pyrun-editor")
         area.addEventListener("input", create_proxy(make_input(area)))
         area.addEventListener("keydown", create_proxy(make_keys(area)))
-        toggle.addEventListener("change", create_proxy(
-            lambda e, toggle=toggle, editor=editor: setattr(editor.style, "display", "block" if toggle.checked else "none")))
 
         def do_reset(e):
             source["text"] = ORIGINAL_SOURCE
             for other in areas:
                 other.value = ORIGINAL_SOURCE
+                window.refreshCode(other)
         reset.addEventListener("click", create_proxy(do_reset))
 
 
@@ -432,14 +434,14 @@ def wire():
         name = box.dataset.run
         arg_input = box.querySelector("input")
         button = box.querySelector("button")
-        out = box.querySelector("pre")
+        out = box.querySelector("pre.pyrun-out")
 
         def handler(event, name=name, arg_input=arg_input, out=out, box=box):
             args = arg_input.value if arg_input is not None else box.dataset.section
             toggle = box.querySelector(".pyrun-toggle")
             out.classList.remove("err")
             try:
-                if toggle is not None and toggle.checked:      # run the edited sim.py
+                if toggle is not None and toggle.getAttribute("aria-pressed") == "true":      # run the edited sim.py
                     text, ok = run_source(source["text"])
                     sec = box.dataset.section
                     if ok and sec and sec != "all":

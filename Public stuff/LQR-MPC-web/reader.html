@@ -88,13 +88,26 @@
   .legend { font-size: 12.5px; margin: 0 0 2px; } .legend span { margin-right: 14px; }
   .swatch { display: inline-block; width: 18px; height: 3px; vertical-align: middle; margin-right: 6px; border-radius: 2px; }
   .mpc-c { background: #b3261e; } .lqrd-c { background: #2563eb; }
-  .pyrun-edit { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; margin-left: auto; cursor: pointer; }
+  .pyrun-edit-btn { margin-left: auto; background: var(--bg); color: var(--fg); border: 1px solid var(--border);
+    border-radius: 7px; padding: 6px 12px; font: inherit; font-size: 13px; cursor: pointer; }
+  .pyrun-edit-btn[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
   .pyrun-editor { margin-top: 10px; }
+  .pyrun-editor[hidden] { display: none; }
   .pyrun-ehead { font-size: 12.5px; color: var(--muted); margin-bottom: 4px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
   .pyrun-ehead button { background: var(--grid); color: var(--fg); border: none; border-radius: 6px; padding: 3px 10px; font: inherit; font-size: 12px; cursor: pointer; }
-  .pyrun-editor textarea { width: 100%; height: 26em; resize: vertical; white-space: pre; overflow: auto; tab-size: 4;
-    font: 12px/1.45 ui-monospace, Menlo, monospace; background: var(--bg); color: var(--fg);
-    border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; }
+  /* A light tan code box in both themes. A highlighted <pre> sits under a transparent <textarea>. */
+  .codebox { position: relative; height: 26em; resize: vertical; overflow: hidden; background: #f6efdc; color: #2b2a26;
+    border: 1px solid #d9cca6; border-radius: 6px; }
+  .codebox pre, .codebox textarea { position: absolute; inset: 0; margin: 0; padding: 10px 12px; border: 0; box-sizing: border-box;
+    font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; tab-size: 4; white-space: pre;
+    letter-spacing: 0; word-spacing: 0; overflow: auto; }
+  .codebox pre { pointer-events: none; overflow: hidden; background: none; }
+  .codebox pre code { background: none; padding: 0; font: inherit; color: inherit; }
+  .codebox textarea { background: transparent; color: transparent; caret-color: #2b2a26; resize: none; outline: none; }
+  .codebox textarea::selection { background: rgba(37, 99, 235, .25); }
+  .tk-kw { color: #a626a4; font-weight: 600; } .tk-str { color: #3b7a1e; } .tk-com { color: #8a8576; font-style: italic; }
+  .tk-num { color: #b25c00; } .tk-def { color: #1c5fb0; font-weight: 600; } .tk-bi { color: #0b7285; }
+  .tk-self { color: #b03a48; font-style: italic; } .tk-dec { color: #7a5200; }
   .pyrun-out.err { color: var(--bad); }
 </style>
 <script>
@@ -159,6 +172,41 @@ function rewriteMdLinks(container, baseURL) {
 
 /* -- "Run it here" boxes: <div class="pyrun" data-run="sim|bangbang|pd|lqr|mpc" ...> in the Markdown.
       PyScript is only loaded on pages that have one. docs_runs.py wires up the buttons. -- */
+/* -- Python syntax colouring for the editable sim.py boxes -- */
+const PY_KW = new Set("False None True and as assert async await break class continue def del elif else except finally for from global if import in is lambda nonlocal not or pass raise return try while with yield".split(" "));
+const PY_BI = new Set("print range len abs min max sum float int str list dict set tuple zip enumerate isinstance sorted round open type bool map filter any all super reversed next iter format repr divmod pow".split(" "));
+function escHtml(t) { return t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+function highlightPython(src) {
+  const re = /("""[\s\S]*?"""|\'\'\'[\s\S]*?\'\'\')|(#[^\n]*)|((?:[rRbBfFuU]{0,2})(?:"(?:\\.|[^"\\\n])*"|'(?:\\.|[^'\\\n])*'))|(@[A-Za-z_][\w.]*)|(\b\d[\d_]*\.?\d*(?:[eE][+-]?\d+)?\b|\.\d+)|([A-Za-z_]\w*)|([\s\S])/g;
+  let out = "", prev = "", m;
+  while ((m = re.exec(src)) !== null) {
+    const t = m[0], e = escHtml(t);
+    if (m[1] || m[3]) out += `<span class="tk-str">${e}</span>`;
+    else if (m[2]) out += `<span class="tk-com">${e}</span>`;
+    else if (m[4]) out += `<span class="tk-dec">${e}</span>`;
+    else if (m[5]) out += `<span class="tk-num">${e}</span>`;
+    else if (m[6]) {
+      if (PY_KW.has(t)) out += `<span class="tk-kw">${e}</span>`;
+      else if (prev === "def" || prev === "class") out += `<span class="tk-def">${e}</span>`;
+      else if (t === "self") out += `<span class="tk-self">${e}</span>`;
+      else if (PY_BI.has(t)) out += `<span class="tk-bi">${e}</span>`;
+      else out += e;
+      prev = t;
+      continue;
+    } else out += e;
+    if (!/^\s+$/.test(t)) prev = "";
+  }
+  return out;
+}
+/* Redraw the colours under a code box's textarea. Python calls this after it sets the text. */
+window.refreshCode = function (area) {
+  const box = area.closest(".codebox");
+  if (!box) return;
+  box.querySelector("pre code").innerHTML = highlightPython(area.value) + "\n";
+  const pre = box.querySelector("pre");
+  pre.scrollTop = area.scrollTop; pre.scrollLeft = area.scrollLeft;
+};
+
 function buildLabs(container) {
   const row = (id, label, min, max, step, value) =>
     `<div class="lab-row"><label>${label} <span class="val" id="${id}-val"></span></label>` +
@@ -199,14 +247,34 @@ function buildRunBoxes(container) {
       (args !== undefined ? `<input value="${args}" spellcheck="false" aria-label="arguments for ${script}">` : "") +
       `<button disabled>Loading Python…</button>` +
       (box.dataset.run === "sim"
-        ? `<label class="pyrun-edit"><input type="checkbox" class="pyrun-toggle"> Edit the code</label>` : "") +
+        ? `<button type="button" class="pyrun-edit-btn pyrun-toggle" aria-pressed="false" ` +
+          `title="Show sim.py. While this is on, Run uses your edited version.">✎ Edit the code</button>` : "") +
       `</div>` +
       (box.dataset.run === "sim"
-        ? `<div class="pyrun-editor" style="display:none"><div class="pyrun-ehead">` +
-          `<b>sim.py</b> (edit anything, then press Run; your edits are shared by every box on this page)` +
+        ? `<div class="pyrun-editor" hidden><div class="pyrun-ehead">` +
+          `<b>sim.py</b> (edit anything, then press Run; Run uses your edits while Edit the code is on, ` +
+          `and they are shared by every box on this page)` +
           `<button class="pyrun-reset" type="button">Reset to the original</button></div>` +
-          `<textarea spellcheck="false" aria-label="sim.py source"></textarea></div>` : "") +
+          `<div class="codebox"><pre aria-hidden="true"><code></code></pre>` +
+          `<textarea spellcheck="false" autocomplete="off" autocapitalize="off" aria-label="sim.py source"></textarea></div></div>` : "") +
       `<pre class="pyrun-out" style="display:none"></pre>`;
+  });
+  boxes.forEach(box => {
+    const toggle = box.querySelector(".pyrun-toggle"), editor = box.querySelector(".pyrun-editor");
+    if (!toggle || !editor) return;
+    toggle.addEventListener("click", () => {
+      const on = toggle.getAttribute("aria-pressed") !== "true";
+      toggle.setAttribute("aria-pressed", String(on));
+      toggle.textContent = on ? "✎ Editing (click to hide)" : "✎ Edit the code";
+      editor.hidden = !on;
+      if (on && window.refreshCode) window.refreshCode(editor.querySelector("textarea"));
+    });
+    const area = editor.querySelector("textarea");
+    area.addEventListener("input", () => window.refreshCode(area));
+    area.addEventListener("scroll", () => {
+      const pre = editor.querySelector("pre");
+      pre.scrollTop = area.scrollTop; pre.scrollLeft = area.scrollLeft;
+    });
   });
   buildLabs(container);
   if (!boxes.length && !container.querySelector(".pylab")) return;
