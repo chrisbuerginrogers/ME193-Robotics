@@ -72,8 +72,9 @@ def chart(series, xlabel, ylabel, hlines=(), vspan=None, ydomain=None, aspect=0.
     xs = np.concatenate(xs_all) if xs_all else np.array([0.0, 1.0])
     ys = np.concatenate(ys_all + [np.array(list(hlines), float)]) if ys_all or hlines else np.array([-1.0, 1.0])
     x0, x1 = float(xs.min()), float(xs.max())
-    if vspan:
-        x0, x1 = min(x0, vspan[0]), max(x1, vspan[1])
+    spans = [] if not vspan else (list(vspan) if isinstance(vspan[0], (tuple, list)) else [vspan])
+    for a, b in spans:
+        x0, x1 = min(x0, a), max(x1, b)
     if ydomain:
         y0, y1 = ydomain
     else:
@@ -87,8 +88,8 @@ def chart(series, xlabel, ylabel, hlines=(), vspan=None, ydomain=None, aspect=0.
     def Y(y): return T + (1 - (y - y0) / (y1 - y0)) * (height - T - B)
 
     p = [f'<svg class="plot" viewBox="0 0 {width} {height}" role="img" aria-label="{ylabel} against {xlabel}">']
-    if vspan:
-        a, b = X(max(vspan[0], x0)), X(min(vspan[1], x1))
+    for sa, sb in spans:
+        a, b = X(max(sa, x0)), X(min(sb, x1))
         p.append(f'<rect class="vspan" x="{a:.1f}" y="{T}" width="{max(0, b - a):.1f}" height="{height - T - B}"/>')
     for t in _ticks(y0, y1):
         p.append(f'<line class="gridline" x1="{L}" x2="{width - R}" y1="{Y(t):.1f}" y2="{Y(t):.1f}"/>'

@@ -529,7 +529,7 @@ with $Q_d = QT$ and $R_d = RT$ so the weights keep meaning the same thing.
 
 You do not need a library for this. Start at $P = Q_d$ and apply the right-hand
 side until it stops changing — it converges in a few dozen iterations, and it is
-[eleven lines of numpy](lqrmpc.py):
+[eleven lines of numpy](sim.py):
 
 ```python
 def dlqr(A, B, Q, R, iters=100_000, tol=1e-12):

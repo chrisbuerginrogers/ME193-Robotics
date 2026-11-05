@@ -1,199 +1,162 @@
 """
 LEGO Education Double Motor + Color Sensor, driven from the browser.
 
-The `legoeducation` package talks Bluetooth through a background thread, which
-a browser does not have. The patch below swaps that thread for Web Bluetooth
-(ble.js) running on the page's own event loop. It is the same patch the QLearn
-page uses.
+The `legoeducation` library (1.2.0 and later) has its own Web Bluetooth transport that
+switches on inside a browser. Its synchronous API needs a browser feature (stack
+switching) that this page's Python does not have, so the page uses the library's
+async internals directly: pick a hub, connect, check the firmware, then send
+commands without waiting. Only the latest firmware is supported.
 
-On top of that sits `LineFollower`, the one-sensor line follower from the
-course: read() gives (e, theta, saturated), drive() takes a speed and a yaw rate.
+On top of that sits `LineFollower`, the one-sensor line follower from the course:
+read() gives (e, theta, saturated), drive() takes a speed and a yaw rate.
 """
 
 import asyncio
 import math
-from collections import deque
-from concurrent.futures import Future
 
 import legoeducation as le
-import legoeducation.background_worker as bw
+import legoeducation.basic_device as bd
 from legoeducation import ColorSensor as _CS
 from legoeducation import DoubleMotor as _DM
-from legoeducation.rpc_message import RPC_VERSION, InfoRequest, InfoResponse
-from pyodide.ffi import create_proxy
+from legoeducation.rpc_message import (RPC_VERSION, DeviceNotificationRequest, InfoRequest,
+                                       InfoResponse)
 from pyscript import window
-from pyscript.js_modules.ble import BLEDevice as _BLEDeviceJS
 
 import lqrmpc as m
 
 # The page sets these: hooks["log"](text) and hooks["changed"]() on (dis)connect.
 hooks = {"log": print, "changed": lambda: None}
 
-
-# -- Web Bluetooth in place of the library's BLE thread ------------------------
-def _wasm_start_thread(self):
-    if getattr(self, "_wasm_loop_started", False):
-        return
-    self._wasm_loop_started = True
-    if not hasattr(self, "_js_ble_registry"):
-        self._js_ble_registry = {}
-    try:
-        self.loop = asyncio.get_running_loop()
-        self.loop_ready.set()
-        asyncio.ensure_future(_wasm_worker_loop(self))
-    except RuntimeError:
-        pass
-
-
-def _wasm_put_request(self, request):
-    if not self.loop_ready.is_set():
-        try:
-            self.loop = asyncio.get_running_loop()
-            self.loop_ready.set()
-            if not hasattr(self, "_js_ble_registry"):
-                self._js_ble_registry = {}
-            asyncio.ensure_future(_wasm_worker_loop(self))
-        except RuntimeError:
-            return
-    asyncio.ensure_future(self.async_put_request(request))
-
-
-async def _wasm_worker_loop(worker):
-    while True:
-        try:
-            req = await worker.request_queue.get()
-            if req is None:
-                break
-            topic = req.get("topic")
-            if topic == "send":
-                js_ble = worker._js_ble_registry.get(id(req.get("msg")))
-                message = req.get("msg2")
-                if js_ble and message:
-                    await js_ble.send(list(message))
-            elif topic == "connect":
-                cb = req.get("msg3")
-                if cb:
-                    cb(True)
-            elif topic == "disconnect":
-                js_ble = worker._js_ble_registry.pop(id(req.get("msg")), None)
-                if js_ble:
-                    js_ble.disconnect()
-        except Exception as exc:
-            hooks["log"](f"Worker error: {exc}")
-
-
-bw.Worker.start_thread = _wasm_start_thread
-bw.Worker.put_request = _wasm_put_request
-
-SERVICE_UUID = "0000fd02-0000-1000-8000-00805f9b34fb"
-WRITE_UUID = "0000fd02-0001-1000-8000-00805f9b34fb"
-NOTIFY_UUID = "0000fd02-0002-1000-8000-00805f9b34fb"
-
-NOTIFY_MS = 50  # the library's default is 100 ms (10 Hz); the control loop wants 20 Hz
-
-
+NOTIFY_MS = 50   # the library default is 100 ms (10 Hz); the control loop wants 20 Hz
 UPDATE_URL = "https://code.legoeducation.com/"
 
 
+def _fire_and_forget(coro):
+    """Stand-in for the library's _run_sync, which needs stack switching.
+
+    Every command this page sends is non-blocking, so scheduling it is enough.
+    """
+    task = asyncio.ensure_future(coro)
+
+    def done(t):
+        if not t.cancelled() and t.exception() is not None:
+            hooks["log"](f"Bluetooth command failed: {t.exception()}")
+
+    task.add_done_callback(done)
+    return None
+
+
+bd._run_sync = _fire_and_forget
+
+
 def firmware_status(hub_version, library_version=RPC_VERSION):
-    """'ok' for the latest firmware, 'old' if the hub needs updating, 'new' if the hub is ahead of this page."""
+    """'ok' for the latest firmware, 'old' if the hub needs updating, 'new' if this page is out of date.
+
+    As in the library: from RPC major 2 on, major.minor must match (the build number is ignored);
+    before that, all three parts must match.
+    """
     hub_version, library_version = tuple(hub_version), tuple(library_version)
-    if hub_version == library_version:
+    n = 2 if library_version[0] >= 2 else 3
+    if hub_version[:n] == library_version[:n]:
         return "ok"
     return "old" if hub_version < library_version else "new"
 
 
-async def _check_firmware_version(device, timeout=3.0):
-    """Only the latest firmware is supported.
-
-    Returns True if the hub may be used. An older hub gets an alert telling the
-    user to update at code.legoeducation.com, and False so the caller disconnects it.
-    """
-    msg = InfoRequest().Serialize()
-    future = Future()
-    device._pending_responses.setdefault(msg[0] + 1, deque()).append(future)
-    device._ask("send", device.device, msg)
-    try:
-        payload = await asyncio.wait_for(asyncio.wrap_future(future), timeout=timeout)
-    except asyncio.TimeoutError:
-        hooks["log"](f"{device.label}: could not read the firmware version, so it was not checked. "
-                     f"If it misbehaves, update your hardware at {UPDATE_URL}")
-        return True
-    info = InfoResponse.Deserialize(payload)
-    version = (info.rpcMajor, info.rpcMinor, info.rpcBuild)
-    status = firmware_status(version)
-    if status == "old":
-        text = (f"The {device.label.lower()} has older firmware than this page supports "
-                f"(version {'.'.join(map(str, version))}, needs {'.'.join(map(str, RPC_VERSION))}).\n\n"
-                f"Please update your hardware at {UPDATE_URL} and connect again.")
-        hooks["log"](text.replace("\n\n", " "))
-        window.alert(text)
-        return False
-    if status == "new":
-        hooks["log"](f"{device.label}: the hub is newer than this page's LEGO library. "
-                     f"If it misbehaves, the page needs an update.")
-    return True
+def _versions_text(hub, lib):
+    return f"hub RPC {'.'.join(map(str, hub))}, this page needs {'.'.join(map(str, lib))}"
 
 
 class WebDevice:
-    def __init__(self, label):
+    """Mixin: connect a library device through the browser's Bluetooth picker."""
+
+    def _init_web(self, label):
         self.label = label
-        self.connected = False
-        self.js_ble = None
+        self.version_rpc = None
 
     async def connect_web(self):
-        js_ble = _BLEDeviceJS.new()
-        self._notification_proxy = create_proxy(
-            lambda data: asyncio.ensure_future(self._on_notification(bytes(data.to_py()))))
-        self._disconnect_proxy = create_proxy(self._on_disconnect)
-        js_ble.callback = self._notification_proxy
-        js_ble.disconnectCallback = self._disconnect_proxy
-        if not await js_ble.connect(SERVICE_UUID, WRITE_UUID, NOTIFY_UUID):
-            return False
-        self.js_ble = js_ble
-        self.connected = True
-        self.device = self
-        import legoeducation.basic_device as bd
-        bd.my_worker._js_ble_registry[id(self)] = js_ble
+        """Show the picker, connect, check the firmware, start notifications. True if ready to use."""
         try:
-            self.device_notification_request(NOTIFY_MS, blocking=False)
-        except Exception:
-            pass
-        if not await _check_firmware_version(self):
-            self.disconnect_web()
+            found = await self.my_worker.scan(0, self._compose_filters())
+        except Exception as exc:
+            hooks["log"](f"{self.label}: could not open the Bluetooth picker ({exc}).")
             return False
+        if not found:
+            hooks["log"](f"{self.label}: no device chosen.")
+            return False
+        device = found[0]
+        self.device = device
+        try:
+            ok = await self._async_connect(device, self._device_callback, self._disconnect_callback)
+        except Exception as exc:
+            hooks["log"](f"{self.label}: could not connect ({exc}).")
+            return False
+        if not ok:
+            hooks["log"](f"{self.label}: could not connect.")
+            return False
+        self.connected = True
+
+        # Only the latest firmware is supported.
+        try:
+            payload = await asyncio.wait_for(
+                self._async_send_commands(InfoRequest().Serialize(), blocking=True), timeout=4.0)
+            info = InfoResponse.Deserialize(payload)
+            hub = (info.rpcMajor, info.rpcMinor, info.rpcBuild)
+        except Exception as exc:
+            hooks["log"](f"{self.label}: could not read the firmware version ({exc}).")
+            await self._drop()
+            return False
+        self.version_rpc = hub
+        status = firmware_status(hub)
+        if status != "ok":
+            if status == "old":
+                text = (f"The {self.label.lower()} has older firmware than this page supports "
+                        f"({_versions_text(hub, RPC_VERSION)}).\n\n"
+                        f"Please update your hardware at {UPDATE_URL} and connect again.")
+            else:
+                text = (f"The {self.label.lower()} has newer firmware than this page supports "
+                        f"({_versions_text(hub, RPC_VERSION)}).\n\n"
+                        f"This page needs an update. Please tell your instructor.")
+            hooks["log"](text.replace("\n\n", " "))
+            window.alert(text)
+            await self._drop()
+            return False
+
+        try:
+            await self._async_send_commands(DeviceNotificationRequest(NOTIFY_MS).Serialize(), blocking=False)
+            await asyncio.wait_for(self._first_notification_ready.wait(), timeout=3.0)
+        except Exception:
+            hooks["log"](f"{self.label}: no sensor readings yet; they may take a moment to start.")
         hooks["log"](f"{self.label} connected.")
         hooks["changed"]()
         return True
 
-    async def _on_notification(self, data):
-        await self._device_callback(NOTIFY_UUID, data)
-
-    def _on_disconnect(self, event):
+    async def _drop(self):
         self.connected = False
-        hooks["log"](f"{self.label} disconnected.")
+        try:
+            await self.my_worker.disconnect(self.device)
+        except Exception:
+            pass
         hooks["changed"]()
 
     def disconnect_web(self):
-        if self.js_ble:
-            self.js_ble.disconnect()
-            self._on_disconnect(None)
+        asyncio.ensure_future(self._drop())
 
-    def send_command(self, packet):
-        if self.js_ble is not None:
-            asyncio.ensure_future(self.js_ble.send(list(packet)))
+    def _disconnect_callback(self):
+        super()._disconnect_callback()
+        hooks["log"](f"{self.label} disconnected.")
+        hooks["changed"]()
 
 
 class DoubleMotorDevice(WebDevice, _DM):
     def __init__(self):
         _DM.__init__(self)
-        WebDevice.__init__(self, "Motors")
+        self._init_web("Motors")
 
 
 class ColorSensorDevice(WebDevice, _CS):
     def __init__(self):
         _CS.__init__(self)
-        WebDevice.__init__(self, "Sensor")
+        self._init_web("Sensor")
 
 
 # -- the line follower ----------------------------------------------------------

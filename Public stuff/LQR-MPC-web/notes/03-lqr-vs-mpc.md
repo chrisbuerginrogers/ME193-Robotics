@@ -77,7 +77,7 @@ around there. That is the same rule of thumb that set $N = 15$ in
 
 ### And it is the same code
 
-Look at the Riccati iteration in [`sim.py`](lqrmpc.py):
+Look at the Riccati iteration in [`sim.py`](sim.py):
 
 ```python
 P = Q

@@ -63,6 +63,39 @@
   .pyrun-row button:disabled { opacity: .55; cursor: default; }
   .pyrun-out { margin: 10px 0 0; max-height: 28em; overflow: auto; font-size: 12px; line-height: 1.45;
     background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; }
+  .pylab { border: 1px solid var(--border); border-left: 4px solid var(--accent); border-radius: 8px;
+    background: var(--panel-bg); padding: 12px 14px; margin: 1.2em 0; }
+  .pylab-grid { display: grid; grid-template-columns: minmax(200px, 270px) 1fr; gap: 18px; }
+  @media (max-width: 760px) { .pylab-grid { grid-template-columns: 1fr; } }
+  .lab-row { margin-bottom: 9px; font-size: 13px; }
+  .lab-row label { display: block; margin-bottom: 1px; }
+  .lab-row .val { float: right; color: var(--accent); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .lab-row input[type=range] { width: 100%; }
+  main.doc .pylab h4 { margin: 14px 0 4px; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+  main.doc .pylab h4:first-child { margin-top: 0; }
+  main.doc .pylab table { display: table; font-size: 12.5px; margin: 4px 0; font-variant-numeric: tabular-nums; }
+  main.doc .pylab th, main.doc .pylab td { padding: 3px 8px; border: none; border-bottom: 1px solid var(--border); text-align: right; background: none; }
+  main.doc .pylab th:first-child, main.doc .pylab td:first-child { text-align: left; }
+  .pylab tr.pick td { font-weight: 700; color: var(--ok); }
+  .pylab tr.bad td { color: var(--bad); }
+  svg.plot { width: 100%; height: auto; display: block; }
+  svg.plot text { fill: var(--muted); font-size: 11px; }
+  svg.plot .axis { stroke: var(--border); } svg.plot .gridline { stroke: var(--grid); }
+  svg.plot .vspan { fill: rgba(128,128,128,.18); }
+  svg.plot .limit { stroke: #e33; stroke-width: 1; stroke-dasharray: 5 4; }
+  svg.plot path.s { fill: none; stroke-width: 2; stroke-linejoin: round; }
+  svg.plot .mpc { stroke: #b3261e; } svg.plot .lqrd { stroke: #2563eb; stroke-dasharray: 6 4; }
+  .legend { font-size: 12.5px; margin: 0 0 2px; } .legend span { margin-right: 14px; }
+  .swatch { display: inline-block; width: 18px; height: 3px; vertical-align: middle; margin-right: 6px; border-radius: 2px; }
+  .mpc-c { background: #b3261e; } .lqrd-c { background: #2563eb; }
+  .pyrun-edit { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; margin-left: auto; cursor: pointer; }
+  .pyrun-editor { margin-top: 10px; }
+  .pyrun-ehead { font-size: 12.5px; color: var(--muted); margin-bottom: 4px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .pyrun-ehead button { background: var(--grid); color: var(--fg); border: none; border-radius: 6px; padding: 3px 10px; font: inherit; font-size: 12px; cursor: pointer; }
+  .pyrun-editor textarea { width: 100%; height: 26em; resize: vertical; white-space: pre; overflow: auto; tab-size: 4;
+    font: 12px/1.45 ui-monospace, Menlo, monospace; background: var(--bg); color: var(--fg);
+    border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; }
+  .pyrun-out.err { color: var(--bad); }
 </style>
 <script>
   window.MathJax = {
@@ -126,6 +159,32 @@ function rewriteMdLinks(container, baseURL) {
 
 /* -- "Run it here" boxes: <div class="pyrun" data-run="sim|bangbang|pd|lqr|mpc" ...> in the Markdown.
       PyScript is only loaded on pages that have one. docs_runs.py wires up the buttons. -- */
+function buildLabs(container) {
+  const row = (id, label, min, max, step, value) =>
+    `<div class="lab-row"><label>${label} <span class="val" id="${id}-val"></span></label>` +
+    `<input type="range" id="${id}" min="${min}" max="${max}" step="${step}" value="${value}"></div>`;
+  container.querySelectorAll(".pylab").forEach(box => {
+    box.innerHTML = `<div class="pylab-grid"><div>` +
+      row("lab-qth", "Q_TH (cost per rad²)", 0, 30, 0.5, 0) +
+      row("lab-r", "R_W (cost per (rad/s)²)", 1, 200, 1, 25) +
+      row("lab-qe", "Q_E (cost per mm²)", 0.1, 20, 0.1, 1) +
+      row("lab-v", "speed v (mm/s)", 50, 300, 5, 150) +
+      row("lab-radius", "turn radius (mm)", 20, 400, 5, 80) +
+      `<div class="lab-row"><label><input type="checkbox" id="lab-second"> add a second turn to DEMO_TRACK</label></div>` +
+      row("lab-emax", "sensor window e_max (mm)", 2, 15, 0.5, 6) +
+      row("lab-n", "MPC horizon (steps)", 1, 40, 1, 15) +
+      row("lab-qv", "q_v (log scale)", -3, 0, 0.05, -2) +
+      `</div><div><div class="pyrun-head" id="lab-loading">Loading Python… the sliders come alive in about ten seconds.</div>` +
+      `<h4>Gains (section 1)</h4><div id="lab-gains"></div>` +
+      `<h4>Steady-state offset against turn radius (section 3)</h4><div id="lab-radii"></div>` +
+      `<h4>One MPC solve entering the first turn (section 4)</h4><div id="lab-solve"></div>` +
+      `<h4>Head to head (section 5)</h4><div id="lab-stats"></div>` +
+      `<h4>Lateral error e(t)</h4><div id="lab-pe"></div>` +
+      `<h4>Forward speed v(t)</h4><div id="lab-pv"></div>` +
+      `</div></div>`;
+  });
+}
+
 function buildRunBoxes(container) {
   const boxes = container.querySelectorAll(".pyrun");
   boxes.forEach(box => {
@@ -138,9 +197,19 @@ function buildRunBoxes(container) {
       (sec && sec !== "all" ? ` (section ${sec} of its report)` : "") + `.</div>` +
       `<div class="pyrun-row"><code>${cmd}</code>` +
       (args !== undefined ? `<input value="${args}" spellcheck="false" aria-label="arguments for ${script}">` : "") +
-      `<button disabled>Loading Python…</button></div><pre class="pyrun-out" style="display:none"></pre>`;
+      `<button disabled>Loading Python…</button>` +
+      (box.dataset.run === "sim"
+        ? `<label class="pyrun-edit"><input type="checkbox" class="pyrun-toggle"> Edit the code</label>` : "") +
+      `</div>` +
+      (box.dataset.run === "sim"
+        ? `<div class="pyrun-editor" style="display:none"><div class="pyrun-ehead">` +
+          `<b>sim.py</b> (edit anything, then press Run; your edits are shared by every box on this page)` +
+          `<button class="pyrun-reset" type="button">Reset to the original</button></div>` +
+          `<textarea spellcheck="false" aria-label="sim.py source"></textarea></div>` : "") +
+      `<pre class="pyrun-out" style="display:none"></pre>`;
   });
-  if (!boxes.length) return;
+  buildLabs(container);
+  if (!boxes.length && !container.querySelector(".pylab")) return;
   const css = document.createElement("link");
   css.rel = "stylesheet"; css.href = "https://pyscript.net/releases/2024.1.1/core.css";
   document.head.appendChild(css);

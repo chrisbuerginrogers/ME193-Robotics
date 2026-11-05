@@ -15,6 +15,7 @@
 - [Plant, sensor, and track](#plant-sensor-and-track)
 - [The MPC half](#the-mpc-half)
 - [The report](#the-report)
+- [Try it here: move the sliders](#try-it-here-move-the-sliders)
 - [Try it](#try-it)
 
 ---
@@ -189,6 +190,30 @@ consistently, because they all read from the same handful of functions above.
 
 ---
 
+## Try it here: move the sliders
+
+The "Try it" list below says to edit constants in `sim.py` and rerun it. On the
+web you don't need to: the sliders here are those constants, and the tables and
+plots recompute as you move them. Every number comes from the same functions
+as the report above.
+
+<div class="pylab" data-lab="sim"></div>
+
+Each item in the list below has a control here:
+
+- **Q_TH** is the $Q_\theta$ slider. Leave it at 0 and the damping ratio stays at
+  $1/\sqrt2$ in the gains table. Move it and watch the ratio change.
+- **R_W** is the $R$ slider. Drop it from 25 to 5 and the "max v" column of the
+  turn-radius table moves, so does the plot, and so does the number of times the
+  fixed-speed LQR goes blind.
+- **A second turn on `DEMO_TRACK`** is the checkbox. Tick it and the MPC's speed plot
+  dips twice.
+- **`horizon`** is the horizon slider. Push it down to 3 and the candidate table
+  stops rejecting the fast speeds, because the horizon is too short to see the turn
+  coming.
+
+---
+
 ## Try it
 
 - Set `Q_TH = 0` (it already is) and confirm section 1's damping ratio is
@@ -202,9 +227,11 @@ consistently, because they all read from the same handful of functions above.
   the candidate table stop rejecting the fast speeds — the horizon is too
   short to see the turn coming.
 
-On the web, the sliders on the [Interactive page](interactive.html) change the same
+On the web you can also edit `sim.py` itself: tick **Edit the code** on any
+**Run it here** box on this page, change the constants or the functions, and press
+Run. The sliders on the [Interactive page](interactive.html) change the same
 constants (turn radius, $e_{max}$, the $Q$ and $R$ weights, the horizon) without
-editing any code. To edit `sim.py` itself, use the local version.
+touching the code.
 
 ---
 

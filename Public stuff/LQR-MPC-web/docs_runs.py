@@ -7,11 +7,17 @@ it (same controllers, same print format). To run on your own robot, use the
 Interactive page.
 """
 
+import contextlib
+import io
+import re
+import traceback
+
 import numpy as np
 from pyodide.ffi import create_proxy
 from pyscript import document
 
 import lqrmpc as m
+from ui import chart, el, slider
 
 BAR = "=" * 74
 
@@ -236,6 +242,188 @@ RUNNERS = {"sim": run_sim,
            "mpc": lambda a: _simulate_script("mpc", a)}
 
 
+
+
+# -- editing sim.py in the page --------------------------------------------------------------
+ORIGINAL_SOURCE = open("sim.py").read()
+source = {"text": ORIGINAL_SOURCE}
+
+
+def run_source(text):
+    """Run the (possibly edited) sim.py as `python3 code/sim.py` would, and return what it printed."""
+    buf = io.StringIO()
+    namespace = {"__name__": "__main__", "__file__": "sim.py"}
+    ok = True
+    try:
+        with contextlib.redirect_stdout(buf):
+            exec(compile(text, "sim.py", "exec"), namespace)
+    except BaseException:
+        ok = False
+        buf.write("\n" + traceback.format_exc())
+    return buf.getvalue(), ok
+
+
+def pick_section(output, n):
+    """The part of the report for section n (the sections start with a line of '=' and 'N. TITLE')."""
+    heads = [(mm.start(), int(mm.group(2))) for mm in re.finditer(r"(?m)^(={20,})\n(\d)\. ", output)]
+    for i, (pos, num) in enumerate(heads):
+        if num == n:
+            end = heads[i + 1][0] if i + 1 < len(heads) else len(output)
+            return output[pos:end].rstrip()
+    return output
+
+
+def wire_editors():
+    boxes = document.querySelectorAll(".pyrun")
+    areas = []
+    for i in range(boxes.length):
+        area = boxes.item(i).querySelector("textarea")
+        if area is not None:
+            area.value = source["text"]
+            areas.append(area)
+
+    def make_input(area):
+        def on_input(event):
+            source["text"] = area.value
+            for other in areas:
+                if other is not area:
+                    other.value = area.value
+        return on_input
+
+    def make_keys(area):
+        def on_key(event):
+            if event.key == "Tab":          # indent instead of leaving the box
+                event.preventDefault()
+                start = area.selectionStart
+                area.value = area.value[:start] + "    " + area.value[area.selectionEnd:]
+                area.selectionStart = area.selectionEnd = start + 4
+                source["text"] = area.value
+        return on_key
+
+    for i in range(boxes.length):
+        box = boxes.item(i)
+        area, toggle, reset = box.querySelector("textarea"), box.querySelector(".pyrun-toggle"), box.querySelector(".pyrun-reset")
+        if area is None:
+            continue
+        editor = box.querySelector(".pyrun-editor")
+        area.addEventListener("input", create_proxy(make_input(area)))
+        area.addEventListener("keydown", create_proxy(make_keys(area)))
+        toggle.addEventListener("change", create_proxy(
+            lambda e, toggle=toggle, editor=editor: setattr(editor.style, "display", "block" if toggle.checked else "none")))
+
+        def do_reset(e):
+            source["text"] = ORIGINAL_SOURCE
+            for other in areas:
+                other.value = ORIGINAL_SOURCE
+        reset.addEventListener("click", create_proxy(do_reset))
+
+
+# -- the lab: sim.py's constants as sliders ---------------------------------------------------
+def _html_table(header, rows, classes=None):
+    out = ["<table><tr>" + "".join(f"<th>{h}</th>" for h in header) + "</tr>"]
+    for i, row in enumerate(rows):
+        cls = f' class="{classes[i]}"' if classes and classes[i] else ""
+        out.append(f"<tr{cls}>" + "".join(f"<td>{c}</td>" for c in row) + "</tr>")
+    return "".join(out) + "</table>"
+
+
+def _lab_track(radius, second_turn):
+    arc = radius * np.pi / 2
+    if second_turn:
+        return m.Track([(400.0, None), (arc, radius), (300.0, None), (arc, -radius), (400.0, None)])
+    return m.Track([(400.0, None), (arc, radius), (400.0, None)])
+
+
+def _turn_spans(track, v):
+    spans, s = [], 0.0
+    for length, radius in track.segments:
+        if radius is not None:
+            spans.append((s / v, (s + length) / v))
+        s += length
+    return spans
+
+
+def lab_recompute(_=None):
+    qe, qth, r = (float(el(i).value) for i in ("lab-qe", "lab-qth", "lab-r"))
+    v, radius, e_max = (float(el(i).value) for i in ("lab-v", "lab-radius", "lab-emax"))
+    horizon, qv = int(float(el("lab-n").value)), 10 ** float(el("lab-qv").value)
+    second = el("lab-second").checked
+    el("lab-qv-val").textContent = f"{qv:.3g}"
+    dt = m.DT
+
+    # 1. gains (section 1 of the report)
+    ke, kth = m.lqr_gains_analytic(v, qe, qth, r)
+    wn = float(np.sqrt(v * ke))
+    zeta = kth / (2 * wn)
+    kde, kdth = m.lqr_gains_discrete(float(v), dt, qe, qth, r)
+    A, B = m.discrete_model(v, dt)
+    pole = float(np.abs(np.linalg.eigvals(A - B @ np.array([[kde, kdth]])))[0])
+    el("lab-gains").innerHTML = _html_table(["", "value"], [
+        ["k_e (rad/s per mm)", f"{ke:.4f}"], ["k_theta (1/s)", f"{kth:.4f}"],
+        ["natural frequency wn (rad/s)", f"{wn:.3f}"],
+        ["damping ratio zeta", f"{zeta:.4f}" + ("  (= 1/sqrt(2) when Q_th = 0)" if qth == 0 else "")],
+        ["settle 4/(zeta*wn)", f"{4 / (zeta * wn):.2f} s = {4 / (zeta * wn) * v:.0f} mm"],
+        [f"discrete gains at dt = {dt:g} s", f"{kde:.4f}, {kdth:.4f}"],
+        ["closed-loop pole radius", f"{pole:.3f}"]])
+
+    # 3. e_ss and the speed limit against turn radius (section 3)
+    rows, cls = [], []
+    for rad in (None, 300.0, 150.0, 80.0, 40.0):
+        kappa = 0.0 if rad is None else 1.0 / rad
+        e_ss = -kappa * v / kde
+        v_lim = float("inf") if kappa == 0 else e_max * ke / kappa
+        blind = abs(e_ss) > e_max
+        rows.append(["straight" if rad is None else f"{rad:.0f} mm", f"{kappa:.5f}", f"{e_ss:+.2f}",
+                     "BLIND" if blind else "ok", "any" if v_lim == float("inf") else f"{v_lim:.0f} mm/s"])
+        cls.append("bad" if blind else "")
+    el("lab-radii").innerHTML = _html_table(
+        ["turn radius", "kappa 1/mm", f"e_ss at {v:.0f}", "verdict", f"max v for |e|<{e_max:g}mm"], rows, cls)
+
+    # 4. one MPC solve entering the first turn (section 4)
+    track = _lab_track(radius, second)
+    lead = track.segments[0][0]
+    best, table = m.mpc_choose_speed(0.0, 0.0, lead - 10.0, track, m.CANDIDATES, horizon, dt, e_max,
+                                     v, qe, qth, r, qv)
+    rows, cls = [], []
+    for cv, peak, cost in table:
+        rows.append([f"{cv:.0f} mm/s", f"{peak:.2f} mm", f"{cost:.2f}",
+                     "<-- chosen" if cv == best else ("violates window" if peak > e_max else "")])
+        cls.append("pick" if cv == best else ("bad" if peak > e_max else ""))
+    el("lab-solve").innerHTML = _html_table(["candidate v", "peak |e| over horizon", "cost J", ""], rows, cls)
+
+    # 5. head to head (section 5) and the plots
+    kde2, kdth2 = m.lqr_gains_discrete(float(v), dt, qe, qth, r)
+    log_l = m.run_fixed_gain(track, v, kde2, kdth2, dt, e_max, 24.0)
+    log_m = m.run_mpc(track, dt, e_max, 24.0, m.CANDIDATES, horizon, v, qe, qth, r, qv)
+    rows = []
+    for name, cls_, log in (("LQR, fixed v", "lqrd-c", log_l), ("MPC, v scheduled", "mpc-c", log_m)):
+        pk, blind, lap, mv = m.stats(log, e_max)
+        rows.append([f'<i class="swatch {cls_}"></i>{name}', f"{pk:.2f} mm", f"{blind:.1f}%", f"{lap:.2f} s", f"{mv:.0f} mm/s"])
+    el("lab-stats").innerHTML = _html_table(["controller", "peak |e|", "blind", "lap", "mean v"], rows)
+    spans = _turn_spans(track, v)
+    el("lab-pe").innerHTML = chart(
+        [dict(xs=log_m[:, 0], ys=log_m[:, 2], cls="mpc", label="MPC"),
+         dict(xs=log_l[:, 0], ys=log_l[:, 2], cls="lqrd", label="LQR")],
+        "t [s]", "e [mm]", hlines=[e_max, -e_max], vspan=spans, aspect=0.4)
+    el("lab-pv").innerHTML = chart(
+        [dict(xs=log_m[:, 0], ys=log_m[:, 4], cls="mpc", label="MPC"),
+         dict(xs=log_l[:, 0], ys=log_l[:, 4], cls="lqrd", label="LQR")],
+        "t [s]", "v [mm/s]", vspan=spans, ydomain=(0, 300), aspect=0.3)
+
+
+def wire_lab():
+    if el("lab-qth") is None:
+        return
+    defaults = [("lab-qe", 1.0, "{:g}"), ("lab-qth", 0.0, "{:g}"), ("lab-r", 25.0, "{:g}"),
+                ("lab-v", 150.0, "{:.0f}"), ("lab-radius", 80.0, "{:.0f}"), ("lab-emax", 6.0, "{:g}"),
+                ("lab-n", 15.0, "{:.0f}"), ("lab-qv", -2.0, "{:g}")]
+    for id, initial, f in defaults:
+        slider(id, lambda x, f=f: f.format(x), initial, lab_recompute)
+    el("lab-second").addEventListener("change", create_proxy(lab_recompute))
+    lab_recompute()
+    el("lab-loading").style.display = "none"
+
+
 # -- wiring to the boxes the reader built --------------------------------------------------------
 def wire():
     boxes = document.querySelectorAll(".pyrun")
@@ -248,8 +436,19 @@ def wire():
 
         def handler(event, name=name, arg_input=arg_input, out=out, box=box):
             args = arg_input.value if arg_input is not None else box.dataset.section
+            toggle = box.querySelector(".pyrun-toggle")
+            out.classList.remove("err")
             try:
-                out.textContent = RUNNERS[name](args)
+                if toggle is not None and toggle.checked:      # run the edited sim.py
+                    text, ok = run_source(source["text"])
+                    sec = box.dataset.section
+                    if ok and sec and sec != "all":
+                        text = pick_section(text, int(sec))
+                    out.textContent = text
+                    if not ok:
+                        out.classList.add("err")
+                else:
+                    out.textContent = RUNNERS[name](args)
             except Exception as exc:
                 out.textContent = f"Could not run: {exc}"
             out.style.display = "block"
@@ -260,3 +459,5 @@ def wire():
 
 
 wire()
+wire_editors()
+wire_lab()

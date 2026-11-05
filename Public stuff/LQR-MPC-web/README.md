@@ -42,13 +42,15 @@ The text is the original's: the five Markdown files are in `notes/`, shown by
 - `interactive_page.py` — the original page's logic, in Python: sliders, readouts,
   charts, calibration, the live oscilloscope and the robot runs.
 - `lqrmpc.py` — the simulator (LQR, MPC, the track), plain numpy.
-- `hardware.py` — Web Bluetooth for the `legoeducation` library (the same patch the
-  QLearn page uses), the `LineFollower`, and the bang-bang, PD, LQR and MPC controllers.
+- `hardware.py` — connects hubs through the `legoeducation` library's own Web Bluetooth
+  transport (library 1.2.0 or later), checks the firmware, and has the `LineFollower` and the
+  bang-bang, PD, LQR and MPC controllers.
 - `assets/robot.jpg` — the sample-build photo (scaled down, with its location data removed).
 - `docs_runs.py` and `docs.toml` — the "Run it here" boxes in the notes: the report from `sim.py`
   and the `run_*.py` scripts, run in the browser. `reader.html` loads them only on pages that have a box.
-- `ui.py` — tables and SVG charts. `ble.js` — the Web Bluetooth wrapper.
-- `pyscript.toml` — loads numpy, `legoeducation` and the modules above.
+- `ui.py` — tables and SVG charts.
+- `sim.py` — the course's `sim.py` (the version the notes let you edit and run).
+- `pyscript.toml` — loads numpy, `legoeducation` 1.2.0 and the modules above.
 
 ## Running it locally
 

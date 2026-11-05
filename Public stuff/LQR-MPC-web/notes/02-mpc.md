@@ -348,7 +348,7 @@ one, solve the nice one exactly" is a standard, respectable answer.
 *Soft constraints.* A hard $|e_k| \le e_{max}$ can make the problem
 **infeasible** — if the robot is already at 7 mm, no input satisfies it, and the
 solver returns nothing at all. A controller that returns nothing is worse than a
-bad controller. The standard fix, and what [`sim.py`](lqrmpc.py) does, is
+bad controller. The standard fix, and what [`sim.py`](sim.py) does, is
 to soften state constraints into steep penalties:
 
 $$\text{penalty} = \rho \sum_k \max(0,\ |e_k| - e_{max})^2, \qquad \rho = 10^4$$
@@ -382,7 +382,7 @@ Four answers, in increasing order of honesty about cost:
 
 **1. A track map.** If the track is known and you have odometry (the Double
 Motor reports wheel positions), you know your arclength $s$ and can look up
-$\kappa(s)$. This is what [`sim.py`](lqrmpc.py) does, and it is legitimate
+$\kappa(s)$. This is what [`sim.py`](sim.py) does, and it is legitimate
 — warehouse AGVs work exactly this way. It is also the right classroom default:
 hand out the map, keep the lesson about MPC rather than about perception.
 

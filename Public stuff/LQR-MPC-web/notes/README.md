@@ -398,7 +398,7 @@ process specifically so a slow redraw can never cost the control loop a
 
 | File | What it is |
 |---|---|
-| [code/sim.py](lqrmpc.py) | Pure-numpy simulator, LQR solver, MPC solver, and the report that generates every table in the docs (walkthrough: [docs/00-sim.md](00-sim.md)) |
+| [code/sim.py](sim.py) | Pure-numpy simulator, LQR solver, MPC solver, and the report that generates every table in the docs (walkthrough: [docs/00-sim.md](00-sim.md)) |
 | [docs/interactive.html](interactive.html) | `sim.py`'s math in the browser: sliders for every gain/cost weight, live e(t)/v(t) plots, your calibration baked in |
 | code/robot.py | The only file that knows about BLE. Exposes `read() -> (e, theta, saturated)` and `drive(v, omega)` |
 | code/calibrate.py | Session 0 measurement script (terminal version) |
