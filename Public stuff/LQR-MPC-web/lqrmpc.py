@@ -29,6 +29,7 @@ DT = 0.05         # s      control period
 Q_E, Q_TH, R_W = 1.0, 0.0, 25.0   # LQR weights; only the ratios matter
 
 CANDIDATES = (40., 60., 80., 100., 120., 150., 180., 210.)
+MPC_CANDIDATES = (40., 60., 80., 100., 120., 150., 180., 210., 240., 280.)
 
 
 # --------------------------------------------------------------------------
@@ -163,10 +164,8 @@ DEMO_TRACK = TRACKS["90° turn, R = 80 mm (the notes' example)"]
 # --------------------------------------------------------------------------
 # Controllers
 # --------------------------------------------------------------------------
-def run_lqr(track, v_cmd=V_REF, dt=DT, e_max=E_MAX, t_max=14.0,
-            q_e=Q_E, q_th=Q_TH, r=R_W):
-    """Fixed-speed, fixed-gain LQR."""
-    k_e, k_th = lqr_gains_discrete(float(v_cmd), dt, q_e, q_th, r)
+def run_fixed_gain(track, v_cmd, k_e, k_th, dt=DT, e_max=E_MAX, t_max=14.0):
+    """Fixed speed, fixed gains: omega = -k_e*coerce(e) - k_th*theta. P/PD and LQR both use this."""
     s = e = theta = 0.0
     log = []
     for i in range(int(t_max / dt)):
@@ -176,7 +175,14 @@ def run_lqr(track, v_cmd=V_REF, dt=DT, e_max=E_MAX, t_max=14.0,
         log.append((i * dt, s, e, theta, v_cmd, omega))
         e, theta = step(e, theta, v_cmd, omega, track.kappa(s), dt)
         s += v_cmd * dt
-    return np.array(log), (k_e, k_th)
+    return np.array(log)
+
+
+def run_lqr(track, v_cmd=V_REF, dt=DT, e_max=E_MAX, t_max=14.0,
+            q_e=Q_E, q_th=Q_TH, r=R_W):
+    """Fixed-speed, fixed-gain LQR. Gains computed once, offline."""
+    k_e, k_th = lqr_gains_discrete(float(v_cmd), dt, q_e, q_th, r)
+    return run_fixed_gain(track, v_cmd, k_e, k_th, dt, e_max, t_max), (k_e, k_th)
 
 
 def mpc_choose_speed(e, theta, s, track, candidates=CANDIDATES, horizon=15,
@@ -225,11 +231,22 @@ def run_mpc(track, dt=DT, e_max=E_MAX, t_max=14.0, candidates=CANDIDATES,
 
 
 def stats(log, e_max=E_MAX):
-    """(peak |e|, % of the run blind, lap time, mean speed)"""
+    """(peak |e|, % of the run blind, lap time, mean speed). Blind = sensor pinned at the window edge."""
     t, s, e, theta, v, omega = log.T
     dt = t[1] - t[0] if len(t) > 1 else DT
-    return (float(np.abs(e).max()), float(100 * (np.abs(e) > e_max).mean()),
+    return (float(np.abs(e).max()), float(100 * (np.abs(e) >= e_max * 0.999).mean()),
             float(t[-1] + dt), float(v.mean()))
+
+
+def turn_track(radius, lead_in=400.0, straight_out=400.0):
+    """Straight, then a 90 degree turn of the given radius, then straight."""
+    return Track([(lead_in, None), (radius * np.pi / 2, radius), (straight_out, None)])
+
+
+def turn_times(track, v):
+    """(time the turn starts, time it ends) at constant speed v."""
+    lead = track.segments[0][0]
+    return lead / v, (lead + track.segments[1][0]) / v
 
 
 def horizon_gain(N, x, v=V_REF, dt=DT, q_e=Q_E, q_th=Q_TH, r=R_W):

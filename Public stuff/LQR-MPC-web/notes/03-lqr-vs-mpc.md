@@ -4,7 +4,7 @@
 > to stop students filing LQR and MPC as two unrelated techniques, which is the
 > most common way this material goes wrong.
 
-> **Interactive:** the MPC tab of [the simulator page](simulate.html) has
+> **Interactive:** the MPC tab of [docs/interactive.html](interactive.html) has
 > a convergence panel that reproduces the table below live as you drag the
 > horizon slider.
 
@@ -167,4 +167,4 @@ measurement regions; two state variables; one sensor.
 
 ---
 
-**Back to:** [the course plan](index.md) · [LQR](01-lqr.md) · [MPC](02-mpc.md)
+**Back to:** [the course plan](README.md) · [LQR](01-lqr.md) · [MPC](02-mpc.md)

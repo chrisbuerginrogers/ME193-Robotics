@@ -199,4 +199,4 @@ consistently, because they all read from the same handful of functions above.
 
 ---
 
-**Back to:** [the course plan](index.md) · [LQR](01-lqr.md) · [MPC](02-mpc.md) · [LQR vs MPC](03-lqr-vs-mpc.md)
+**Back to:** [the course plan](README.md) · [LQR](01-lqr.md) · [MPC](02-mpc.md) · [LQR vs MPC](03-lqr-vs-mpc.md)

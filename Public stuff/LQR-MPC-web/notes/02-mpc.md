@@ -4,7 +4,7 @@
 > LQR line follower running, that you know its gains came from $Q$ and $R$, and
 > that you have watched it slide off a sharp corner.
 
-> **Interactive:** [the simulator page](simulate.html) has an MPC tab
+> **Interactive:** [docs/interactive.html](interactive.html) has an MPC tab
 > with sliders for the horizon and the speed-deviation weight $q_v$, plotting
 > $e(t)$ and $v(t)$ head-to-head against fixed-speed LQR on the same turn.
 

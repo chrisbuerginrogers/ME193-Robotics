@@ -69,10 +69,9 @@
    Markdown, MathJax for the maths. $...$ is pulled out before marked sees it so
    underscores inside formulas survive. All paths are relative to this page, so
    it works from any folder, including a github.io project site. */
-const SITE = [["index.html","Home"],["simulate.html","Simulator"],["lqr.html","LQR"],["mpc.html","MPC"],["robot.html","🔌 Robot"]];
 const NOTES = [
-  ["notes/index.md", "Notes"],
-  ["notes/00-sim.md", "00 · the model"],
+  ["notes/README.md", "Home"],
+  ["notes/00-sim.md", "00 · sim.py"],
   ["notes/01-lqr.md", "01 · LQR"],
   ["notes/02-mpc.md", "02 · MPC"],
   ["notes/03-lqr-vs-mpc.md", "03 · LQR vs MPC"],
@@ -80,9 +79,10 @@ const NOTES = [
 const ROOT = decodeURI(new URL(".", location.href).pathname);
 
 function renderNav(active) {
-  const links = SITE.map(([h, t]) => `<a href="${h}">${t}</a>`);
-  links.push(...NOTES.map(([h, t]) =>
-    `<a href="reader.html?src=${encodeURIComponent(h)}"${h === active ? ' class="active"' : ""}>${t}</a>`));
+  const links = NOTES.map(([h, t]) =>
+    `<a href="reader.html?src=${encodeURIComponent(h)}"${h === active ? ' class="active"' : ""}>${t}</a>`);
+  links.push('<a href="interactive.html">Interactive</a>');
+  links.push('<a href="interactive.html#robot" class="robot-btn">\u{1F50C} Connect to robot</a>');
   document.getElementById("site-nav").innerHTML = links.join("\n");
 }
 function extractMath(md) {
@@ -112,7 +112,7 @@ function rewriteMdLinks(container, baseURL) {
   });
 }
 async function main() {
-  const src = new URLSearchParams(location.search).get("src") || "notes/index.md";
+  const src = new URLSearchParams(location.search).get("src") || "notes/README.md";
   renderNav(src);
   const hit = NOTES.find(([h]) => h === src);
   document.title = (hit ? hit[1] : src) + " · LQR & MPC";

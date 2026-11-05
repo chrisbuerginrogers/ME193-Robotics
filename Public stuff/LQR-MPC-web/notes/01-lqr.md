@@ -2,13 +2,13 @@
 
 > **Prerequisite:** you have a line follower running P or PD control, and you
 > have hand-tuned it, and you are annoyed about it. If not, do
-> Session 2 first.
+> [Session 2](README.md#session-2--p-then-pd-then-the-tuning-wall) first.
 > The whole point of this page is to replace guessing, so you should have
 > guessed at least once.
 
-> **Interactive:** [the simulator page](simulate.html) lets you drag
+> **Interactive:** [docs/interactive.html](interactive.html) lets you drag
 > $Q_e$, $Q_\theta$, and $R$ and watch the gains, damping ratio, and $e(t)$
-> response change together, using the reference build's numbers.
+> response change together, using your own calibrated numbers.
 
 ## Contents
 
@@ -118,7 +118,7 @@ Three facts follow, and all three drive the rest of the course:
 2. **The measurement saturates, and lies while it does.** Off the line, the
    sensor happily reports a steady 85 forever. A controller that trusts it
    thinks the error is a constant 6 mm when it might be 40. This is exactly
-   what happens in Session 4.
+   what happens in [Session 4](README.md#session-4--break-it-on-purpose).
 3. **$\theta$ is never measured at all.** LQR assumes you know the whole state.
    You don't. [See below](#where-does-θ-come-from).
 
