@@ -27,6 +27,12 @@ The text is the original's: the five Markdown files are in `notes/`, shown by
 - The Your robot tab has a "Connect to robot" panel, the calibration is saved in
   your browser instead of `calibration.json`.
 - Each "Run on robot" panel has a Stop button.
+- The notes put the web version first. The "Prerequisite" boxes are marked as local-only,
+  every session sends you to the Interactive tab it uses, and the "Running the code" section
+  says "Use the web" first, then "if you are not using the web version, do this".
+- Where the notes say to run `sim.py` or a `run_*.py` script, there is a "Run it here" box
+  that runs it in your browser and prints the same thing. The `run_*.py` boxes run on the
+  simulator's model of the robot, since the scripts normally drive a real one.
 
 ## The files
 
@@ -39,6 +45,8 @@ The text is the original's: the five Markdown files are in `notes/`, shown by
 - `hardware.py` — Web Bluetooth for the `legoeducation` library (the same patch the
   QLearn page uses), the `LineFollower`, and the bang-bang, PD, LQR and MPC controllers.
 - `assets/robot.jpg` — the sample-build photo (scaled down, with its location data removed).
+- `docs_runs.py` and `docs.toml` — the "Run it here" boxes in the notes: the report from `sim.py`
+  and the `run_*.py` scripts, run in the browser. `reader.html` loads them only on pages that have a box.
 - `ui.py` — tables and SVG charts. `ble.js` — the Web Bluetooth wrapper.
 - `pyscript.toml` — loads numpy, `legoeducation` and the modules above.
 
@@ -54,6 +62,9 @@ the Your robot tab, use "Redo calibration" (black, white, sensor window, then wh
 speed and track width), and press "Run on robot" on any tab. On a real robot there is
 no map, so MPC previews with the turn it is holding now, as the MPC notes explain.
 Until you calibrate, the simulations use the generic reference build.
+
+Only the latest hub firmware is supported. If a hub is older, the page shows an alert asking you
+to update at https://code.legoeducation.com/ and disconnects it.
 
 The robot code follows the course's hardware scripts, but it has only been run against
 simulated devices. On the first real run keep a hand near the robot and use Stop.

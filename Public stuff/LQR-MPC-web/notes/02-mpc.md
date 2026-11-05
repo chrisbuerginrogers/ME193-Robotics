@@ -1,8 +1,12 @@
 # MPC: Planning Ahead, and Slowing Down for the Turn
 
-> **Prerequisite:** [docs/01-lqr.md](01-lqr.md). This page assumes you have an
-> LQR line follower running, that you know its gains came from $Q$ and $R$, and
-> that you have watched it slide off a sharp corner.
+> **Prerequisite (local version only):** [docs/01-lqr.md](01-lqr.md). This page
+> assumes you have an LQR line follower running, that you know its gains came from
+> $Q$ and $R$, and that you have watched it slide off a sharp corner.
+>
+> **On the web there is nothing to build first.** Open the
+> [3. LQR tab](interactive.html#lqr), drag the turn radius until the verdict flips to
+> BLIND, and you have watched it slide off a sharp corner.
 
 > **Interactive:** [docs/interactive.html](interactive.html) has an MPC tab
 > with sliders for the horizon and the speed-deviation weight $q_v$, plotting
@@ -256,7 +260,9 @@ into eight simulations, which is something you can single-step in a debugger.
 candidate, roll the model forward 15 steps through the previewed curvature and
 score it.
 
-Run `python3 code/sim.py`:
+Run it here (section 4 of the report), or locally with `python3 code/sim.py`:
+
+<div class="pyrun" data-run="sim" data-script="code/sim.py" data-section="4"></div>
 
 | Candidate $v$ | Peak $\vert e\vert$ over the horizon | Cost $J$ | |
 |---:|---:|---:|:--|
@@ -414,8 +420,9 @@ architecture of a self-driving car's lateral controller.
 
 Same track for both: 400 mm straight → 90° turn at $R = 80$ mm → 400 mm
 straight. Same steering law, same $Q$ and $R$. The only difference is that one
-holds $v = 150$ mm/s and the other re-decides $v$ every 50 ms.
-`python3 code/sim.py`:
+holds $v = 150$ mm/s and the other re-decides $v$ every 50 ms. Run it here (section 5), or locally with `python3 code/sim.py`:
+
+<div class="pyrun" data-run="sim" data-script="code/sim.py" data-section="5"></div>
 
 | | Peak $\vert e \vert$ | Fraction of run blind | Lap time | Mean speed |
 |---|---:|---:|---:|---:|
@@ -499,6 +506,9 @@ at best reproduce it after doing far more work. Which is exactly what
 ---
 
 ## Labs
+
+On the web, use the [5. MPC tab](interactive.html#mpc): sliders for the horizon and
+$q_v$ plot MPC against fixed-speed LQR, and *Run on robot* tests your own.
 
 1. **Shrink the horizon.** Run the MPC with $N = 15$, then 5, then 2. At what
    horizon does the robot stop braking early and start braking late? Relate

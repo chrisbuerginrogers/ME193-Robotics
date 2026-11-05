@@ -51,6 +51,18 @@
   @media (prefers-color-scheme: dark) {
     .banner { background: #3a2f10; color: #ffd97a; border-color: #5c4a10; }
   }
+  .pyrun { border: 1px solid var(--border); border-left: 4px solid var(--ok); border-radius: 8px;
+    background: var(--panel-bg); padding: 10px 14px; margin: 1.2em 0; }
+  .pyrun-head { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+  .pyrun-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .pyrun-row input { flex: 1; min-width: 8em; max-width: 22em; padding: 5px 8px; border-radius: 6px;
+    border: 1px solid var(--border); background: var(--bg); color: var(--fg);
+    font: 0.9em ui-monospace, Menlo, monospace; }
+  .pyrun-row button { background: var(--ok); color: #fff; border: none; border-radius: 7px; padding: 6px 14px;
+    font: inherit; font-size: 13px; cursor: pointer; }
+  .pyrun-row button:disabled { opacity: .55; cursor: default; }
+  .pyrun-out { margin: 10px 0 0; max-height: 28em; overflow: auto; font-size: 12px; line-height: 1.45;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; }
 </style>
 <script>
   window.MathJax = {
@@ -111,6 +123,35 @@ function rewriteMdLinks(container, baseURL) {
     a.href = `reader.html?src=${encodeURIComponent(rel)}${t.hash}`;
   });
 }
+
+/* -- "Run it here" boxes: <div class="pyrun" data-run="sim|bangbang|pd|lqr|mpc" ...> in the Markdown.
+      PyScript is only loaded on pages that have one. docs_runs.py wires up the buttons. -- */
+function buildRunBoxes(container) {
+  const boxes = container.querySelectorAll(".pyrun");
+  boxes.forEach(box => {
+    const script = box.dataset.script || "code/sim.py";
+    const args = box.dataset.args;
+    const sec = box.dataset.section;
+    const cmd = `python3 ${script}`;
+    box.innerHTML =
+      `<div class="pyrun-head"><b>Run it here, in your browser.</b> Prints what <code>${cmd}</code> prints` +
+      (sec && sec !== "all" ? ` (section ${sec} of its report)` : "") + `.</div>` +
+      `<div class="pyrun-row"><code>${cmd}</code>` +
+      (args !== undefined ? `<input value="${args}" spellcheck="false" aria-label="arguments for ${script}">` : "") +
+      `<button disabled>Loading Python…</button></div><pre class="pyrun-out" style="display:none"></pre>`;
+  });
+  if (!boxes.length) return;
+  const css = document.createElement("link");
+  css.rel = "stylesheet"; css.href = "https://pyscript.net/releases/2024.1.1/core.css";
+  document.head.appendChild(css);
+  const core = document.createElement("script");
+  core.type = "module"; core.src = "https://pyscript.net/releases/2024.1.1/core.js";
+  document.head.appendChild(core);
+  const py = document.createElement("script");
+  py.type = "py"; py.src = "./docs_runs.py"; py.setAttribute("config", "./docs.toml");
+  document.body.appendChild(py);
+}
+
 async function main() {
   const src = new URLSearchParams(location.search).get("src") || "notes/README.md";
   renderNav(src);
@@ -130,6 +171,7 @@ async function main() {
   const { text, store } = extractMath(md);
   box.innerHTML = restoreMath(marked.parse(text, { renderer: makeRenderer(), gfm: true }), store);
   rewriteMdLinks(box, new URL(src, location.href));
+  buildRunBoxes(box);
   if (window.MathJax && MathJax.typesetPromise) await MathJax.typesetPromise([box]);
   if (location.hash) { const el = document.getElementById(location.hash.slice(1)); if (el) el.scrollIntoView(); }
 }

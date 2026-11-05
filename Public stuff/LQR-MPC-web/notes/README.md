@@ -20,6 +20,16 @@ every simplifying assumption eventually bites.
 
 ## Quick start
 
+**Use the web.** Open the **[Interactive page](interactive.html)**. It is the whole
+course in your browser, with nothing to install: the simulator with sliders for
+every gain and cost weight, the calibration, and, if you have the LEGO hardware
+and Chrome or Edge, buttons that connect over Bluetooth and run every controller
+on the real robot. No robot on hand? Everything except the "real robot" buttons
+works from simulation alone. Each session below links to the tab it uses, and the
+**Run it here** boxes run what each script prints, right in the page.
+
+**If you are not using the web version**, do this instead to run the course locally:
+
 ```bash
 git clone https://github.com/chrisbuerginrogers/LQR-MPC.git
 cd LQR-MPC
@@ -43,7 +53,7 @@ controller on the real robot. No robot on hand? Everything except the
 | **[docs/01-lqr.md](01-lqr.md)** | What LQR is, the math behind it, and a fully worked example over the three sensor states: on the line, on the edge, off the line. |
 | **[docs/02-mpc.md](02-mpc.md)** | What MPC is, why you would reach for it, and a worked example of slowing down through a sharp turn. |
 | **[docs/03-lqr-vs-mpc.md](03-lqr-vs-mpc.md)** | The difference in one page, including the numerical demonstration that MPC *becomes* LQR when you take the constraints away. |
-| **[docs/interactive.html](interactive.html)** | The same math as an interactive page: sliders for every gain and cost weight, live e(t)/v(t) plots, using *your* calibrated numbers. See "Running the code" below to launch it. |
+| **[docs/interactive.html](interactive.html)** | The same math as an interactive page: sliders for every gain and cost weight, live e(t)/v(t) plots, using *your* calibrated numbers. Open it from the nav bar (the local version is described in "Running the code" below). |
 
 ## The teaching idea
 
@@ -145,9 +155,12 @@ Build the robot: sensor mounted forward of the wheel axle, 5–8 mm above the
 floor, pointed straight down. Lay a track from 19 mm black tape on white
 poster board.
 
-Then measure your own robot with `python3 code/calibrate.py`: reflection on
-black, reflection on white, the width of the sensor's transition region, wheel
-speed at 100%, and track width. **Nothing in the rest of the course uses a
+Then measure your own robot: reflection on black, reflection on white, the
+width of the sensor's transition region, wheel speed at 100%, and track width.
+On the web, do it on the **[Your robot tab](interactive.html#robot)** (Redo
+calibration: connect the sensor, sample black and white, set the window, drive
+the speed test, save). If you are running locally, use `python3 code/calibrate.py`
+instead. **Nothing in the rest of the course uses a
 number that a student did not measure.**
 
 > Checkpoint: black/white contrast of at least 40 counts, and a sensor window
@@ -157,7 +170,13 @@ number that a student did not measure.**
 `if reflection > threshold: turn left, else: turn right`. It works. It also
 oscillates visibly at a couple of Hz and cannot go fast.
 
-Run `python3 code/run_bangbang.py` and watch the printed wobble frequency.
+On the web, open the **[1. Bang-bang tab](interactive.html#bangbang)**: the plot
+shows the wobble, and *Run on robot* drives your own. You can also run the
+script right here (in simulation) and watch the printed wobble frequency:
+
+<div class="pyrun" data-run="bangbang" data-script="code/run_bangbang.py" data-args="20 100 2"></div>
+
+If you are running locally, run `python3 code/run_bangbang.py` instead.
 
 Ask: *what information are we throwing away?* Answer: the size of the error.
 The sensor reports a number between 12 and 85 and we are using one bit of it.
@@ -170,8 +189,15 @@ Proportional on the normalized error. Better. Push the gain up: it oscillates.
 Push it down: it corners badly. Add a derivative term: much better, and now
 there are two knobs and no principle for setting them.
 
-Run `python3 code/run_pd.py 20 150 <kp>` for the P-only pass, then
-`python3 code/run_pd.py 20 150 <kp> <kd>` once a derivative term is added.
+On the web, use the **[2. P / PD tab](interactive.html#pd)**: sliders for $k_p$
+and $k_d$, a plot of the turn, and *Run on robot*. Or run the script right here
+(in simulation): the P-only pass first, then add a fourth number, $k_d$, once a
+derivative term is added.
+
+<div class="pyrun" data-run="pd" data-script="code/run_pd.py" data-args="20 150 0.15"></div>
+
+If you are running locally: `python3 code/run_pd.py 20 150 <kp>` for the P-only
+pass, then `python3 code/run_pd.py 20 150 <kp> <kd>`.
 
 This is the session where students should get *frustrated* by hand-tuning. Let
 them. Ten minutes of twiddling two numbers is worth an hour of motivation.
@@ -194,7 +220,12 @@ and with $q_\theta = 0$ the damping ratio comes out to exactly $1/\sqrt 2$ no
 matter what else you choose. Students can check that on the whiteboard and then
 watch it on the floor.
 
-Run `python3 code/run_lqr.py`.
+On the web, open the **[3. LQR tab](interactive.html#lqr)**, or run the script
+right here (in simulation):
+
+<div class="pyrun" data-run="lqr" data-script="code/run_lqr.py" data-args="20 150"></div>
+
+If you are running locally, run `python3 code/run_lqr.py`.
 
 > Checkpoint: a student can change $r$ from 25 to 100, predict which way the
 > robot's behavior will move *before* running it, and be right.
@@ -224,7 +255,12 @@ speed as a constant. But the moment speed becomes a decision, the model is no
 longer linear, and there is a hard constraint ($|e| \le 6$ mm) that a quadratic
 cost cannot express. That is precisely the pair of problems MPC was invented for.
 
-Run `python3 code/run_mpc.py` and watch the speed number drop before the corner.
+On the web, open the **[5. MPC tab](interactive.html#mpc)**, or run the script
+right here (in simulation) and watch the speed number drop before the corner:
+
+<div class="pyrun" data-run="mpc" data-script="code/run_mpc.py" data-args="20"></div>
+
+If you are running locally, run `python3 code/run_mpc.py`.
 
 > Checkpoint: a student can point at the printed candidate table and explain
 > why the optimizer rejected 150 mm/s.
@@ -232,8 +268,12 @@ Run `python3 code/run_mpc.py` and watch the speed number drop before the corner.
 ### Session 6 — Same thing, different corner of the same idea
 Read **[docs/03-lqr-vs-mpc.md](03-lqr-vs-mpc.md)**.
 
-Run the last section of `code/sim.py`: with the constraints removed and the
-horizon stretched, the MPC's first move converges to $-Kx$ to twelve decimal
+Run the last section of `code/sim.py` right here (or locally, with
+`python3 code/sim.py`):
+
+<div class="pyrun" data-run="sim" data-script="code/sim.py" data-section="6"></div>
+
+With the constraints removed and the horizon stretched, the MPC's first move converges to $-Kx$ to twelve decimal
 places. LQR is not a different theory from MPC. It is the closed-form answer to
 the special case where the horizon is infinite and nothing is constrained.
 
@@ -258,7 +298,10 @@ and a slow lap. Speed scheduling wins, which is the point.
 | LEGO Education Color Sensor | Single downward light sensor, `reflection` 0–100 |
 | 19 mm black vinyl tape on white board | The track |
 
-Both devices connect over BLE with `pip install legoeducation`. They are
+Both devices connect over BLE (on the web, the Interactive page connects with
+Web Bluetooth; locally, `pip install legoeducation`). Your hubs need the latest
+firmware: if one is older, the page shows an alert asking you to update at
+[code.legoeducation.com](https://code.legoeducation.com/) and will not connect. They are
 **separate BLE devices** — the sensor is not plugged into the motor — so the
 control loop runs on the laptop and the loop rate is limited by the BLE
 notification period. Use 50 ms (20 Hz). This is slow enough to matter, which is
@@ -278,6 +321,19 @@ about: an edge follower is **asymmetric**. Turns that curve toward the tape and
 turns that curve away from it behave differently, and a track should include both.
 
 ## Running the code
+
+**Use the web.** Open the **[Interactive page](interactive.html)**: there is
+nothing to run or install. It is every doc's math turned into sliders: drag
+Q_e/Q_θ/R and watch the damping ratio and e(t) response change together; drag
+the turn radius until the verdict flips to BLIND; drag the MPC horizon and watch
+its first move converge onto the LQR gain. No robot is required for any of that.
+With a robot (Chrome or Edge, latest firmware), the **Your robot** tab connects
+the sensor and motors over Bluetooth and walks through calibration, and every
+controller tab has a **Run on robot** button that plots the real, measured e(t)
+on top of the simulated curve. The **Run it here** boxes in these notes run what
+`sim.py` and the `run_*.py` scripts print, in your browser.
+
+**If you are not using the web version, do this:**
 
 ```bash
 python3 -m venv .venv

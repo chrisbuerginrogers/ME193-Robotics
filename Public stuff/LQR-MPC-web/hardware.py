@@ -21,6 +21,7 @@ from legoeducation import ColorSensor as _CS
 from legoeducation import DoubleMotor as _DM
 from legoeducation.rpc_message import RPC_VERSION, InfoRequest, InfoResponse
 from pyodide.ffi import create_proxy
+from pyscript import window
 from pyscript.js_modules.ble import BLEDevice as _BLEDeviceJS
 
 import lqrmpc as m
@@ -91,8 +92,23 @@ NOTIFY_UUID = "0000fd02-0002-1000-8000-00805f9b34fb"
 NOTIFY_MS = 50  # the library's default is 100 ms (10 Hz); the control loop wants 20 Hz
 
 
+UPDATE_URL = "https://code.legoeducation.com/"
+
+
+def firmware_status(hub_version, library_version=RPC_VERSION):
+    """'ok' for the latest firmware, 'old' if the hub needs updating, 'new' if the hub is ahead of this page."""
+    hub_version, library_version = tuple(hub_version), tuple(library_version)
+    if hub_version == library_version:
+        return "ok"
+    return "old" if hub_version < library_version else "new"
+
+
 async def _check_firmware_version(device, timeout=3.0):
-    """Warn in the log if the hub's firmware and this page's library disagree."""
+    """Only the latest firmware is supported.
+
+    Returns True if the hub may be used. An older hub gets an alert telling the
+    user to update at code.legoeducation.com, and False so the caller disconnects it.
+    """
     msg = InfoRequest().Serialize()
     future = Future()
     device._pending_responses.setdefault(msg[0] + 1, deque()).append(future)
@@ -100,15 +116,23 @@ async def _check_firmware_version(device, timeout=3.0):
     try:
         payload = await asyncio.wait_for(asyncio.wrap_future(future), timeout=timeout)
     except asyncio.TimeoutError:
-        hooks["log"](f"{device.label}: could not read the firmware version.")
-        return
+        hooks["log"](f"{device.label}: could not read the firmware version, so it was not checked. "
+                     f"If it misbehaves, update your hardware at {UPDATE_URL}")
+        return True
     info = InfoResponse.Deserialize(payload)
     version = (info.rpcMajor, info.rpcMinor, info.rpcBuild)
-    if version < RPC_VERSION:
-        hooks["log"](f"{device.label}: firmware update needed. Go to https://code.legoeducation.com/ "
-                     f"to update your hardware.")
-    elif version > RPC_VERSION:
-        hooks["log"](f"{device.label}: the hub is newer than this page's legoeducation library.")
+    status = firmware_status(version)
+    if status == "old":
+        text = (f"The {device.label.lower()} has older firmware than this page supports "
+                f"(version {'.'.join(map(str, version))}, needs {'.'.join(map(str, RPC_VERSION))}).\n\n"
+                f"Please update your hardware at {UPDATE_URL} and connect again.")
+        hooks["log"](text.replace("\n\n", " "))
+        window.alert(text)
+        return False
+    if status == "new":
+        hooks["log"](f"{device.label}: the hub is newer than this page's LEGO library. "
+                     f"If it misbehaves, the page needs an update.")
+    return True
 
 
 class WebDevice:
@@ -135,9 +159,11 @@ class WebDevice:
             self.device_notification_request(NOTIFY_MS, blocking=False)
         except Exception:
             pass
+        if not await _check_firmware_version(self):
+            self.disconnect_web()
+            return False
         hooks["log"](f"{self.label} connected.")
         hooks["changed"]()
-        asyncio.ensure_future(_check_firmware_version(self))
         return True
 
     async def _on_notification(self, data):

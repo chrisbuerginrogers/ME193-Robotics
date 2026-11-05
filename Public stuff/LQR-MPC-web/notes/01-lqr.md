@@ -1,10 +1,14 @@
 # LQR: Letting the Cost Function Choose Your Gains
 
-> **Prerequisite:** you have a line follower running P or PD control, and you
-> have hand-tuned it, and you are annoyed about it. If not, do
+> **Prerequisite (local version only):** you have a line follower running P or PD
+> control, and you have hand-tuned it, and you are annoyed about it. If not, do
 > [Session 2](README.md#session-2--p-then-pd-then-the-tuning-wall) first.
 > The whole point of this page is to replace guessing, so you should have
 > guessed at least once.
+>
+> **On the web there is nothing to build first.** Try P/PD on the
+> [2. P / PD tab](interactive.html#pd): push the gain until it oscillates, pull it
+> back until it corners badly, then come back here.
 
 > **Interactive:** [docs/interactive.html](interactive.html) lets you drag
 > $Q_e$, $Q_\theta$, and $R$ and watch the gains, damping ratio, and $e(t)$
@@ -370,8 +374,10 @@ With $q_e = 1$, $q_\theta = 0$, $r = 25$, $v = 150$ mm/s:
 $$k_e = \sqrt{1/25} = 0.200 \ \text{rad/s per mm}, \qquad
 k_\theta = \sqrt{2 \cdot 150 \cdot 0.2} = \sqrt{60} = 7.746 \ \text{s}^{-1}$$
 
-`python3 code/sim.py` solves the same CARE numerically and agrees to four
-decimals.
+The report in `sim.py` solves the same CARE numerically and agrees to four
+decimals. Run it here (section 1), or locally with `python3 code/sim.py`:
+
+<div class="pyrun" data-run="sim" data-script="code/sim.py" data-section="1"></div>
 
 ---
 
@@ -409,7 +415,13 @@ control engineers hand-tune toward — fastest response with essentially no
 overshoot. It was not requested and not tuned. It is what minimizing
 $\int (e^2/r' + \omega^2)$ *means* for a double integrator.
 
-This is the moment to run the robot.
+This is the moment to run the robot. On the web, open the
+[3. LQR tab](interactive.html#lqr) and press *Run on robot* (the simulated curve is
+there to compare against). Or run the script right here, in simulation:
+
+<div class="pyrun" data-run="lqr" data-script="code/run_lqr.py" data-args="20 150"></div>
+
+If you are running locally, run `python3 code/run_lqr.py`.
 
 For the reference numbers, $\omega_n = \sqrt{150 \times 0.2} = 5.48$ rad/s, so
 disturbances settle in $4/(\zeta\omega_n) = 1.03$ s — about 155 mm of travel.
@@ -655,6 +667,9 @@ Kalman filter fixes. Only the first two are things you simply live with.
 ---
 
 ## Labs
+
+On the web, do these on the [3. LQR tab](interactive.html#lqr): the sliders change
+$Q$ and $R$ and the plot shows the result, and *Run on robot* tests your own.
 
 1. **Predict, then measure.** Change $r$ from 25 to 100. Before running:
    which way does $k_e$ move, and by what factor? Does the damping ratio change?

@@ -1,8 +1,9 @@
 # code/sim.py: The Model Without the Robot
 
 > **Prerequisite:** none. This page can be read before you've built anything,
-> and `python3 code/sim.py` runs with `pip install numpy` and no robot in the
-> room. Read this first if you'd rather understand the model on a train than
+> and every **Run it here** box on it runs in your browser: nothing to install and
+> no robot in the room. (The `pip install numpy` and `python3 code/sim.py`
+> instructions are for the **local version** only.) Read this first if you'd rather understand the model on a train than
 > on the classroom floor.
 
 ## Contents
@@ -172,7 +173,11 @@ docs:
 | 5 | LQR vs. MPC head-to-head on the demo track | [03-lqr-vs-mpc.md](03-lqr-vs-mpc.md#the-demonstration) |
 | 6 | MPC → LQR convergence as the horizon lengthens | [03-lqr-vs-mpc.md](03-lqr-vs-mpc.md#the-demonstration) |
 
-Run it yourself:
+Run it yourself, right here in your browser (all six sections):
+
+<div class="pyrun" data-run="sim" data-script="code/sim.py" data-section="all"></div>
+
+In the local version, run it from a terminal instead:
 
 ```bash
 python3 code/sim.py
@@ -196,6 +201,10 @@ consistently, because they all read from the same handful of functions above.
 - Push `horizon` in `mpc_choose_speed`'s call in section 4 down to 3 and watch
   the candidate table stop rejecting the fast speeds — the horizon is too
   short to see the turn coming.
+
+On the web, the sliders on the [Interactive page](interactive.html) change the same
+constants (turn radius, $e_{max}$, the $Q$ and $R$ weights, the horizon) without
+editing any code. To edit `sim.py` itself, use the local version.
 
 ---
 

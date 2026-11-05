@@ -2,7 +2,8 @@
 
 > Read [01-lqr.md](01-lqr.md) and [02-mpc.md](02-mpc.md) first. This page exists
 > to stop students filing LQR and MPC as two unrelated techniques, which is the
-> most common way this material goes wrong.
+> most common way this material goes wrong. (That is the reading order for the
+> course. On the web, nothing needs to be built or run first.)
 
 > **Interactive:** the MPC tab of [docs/interactive.html](interactive.html) has
 > a convergence panel that reproduces the table below live as you drag the
@@ -43,7 +44,10 @@ reference build's discrete model at $v = 150$ mm/s, $T = 50$ ms, with the LQR
 weights and **no constraints at all**. Put the robot 4 mm off the line at a
 heading error of 0.1 rad, and ask an MPC with horizon $N$ what it would do.
 
-Then lengthen the horizon. `python3 code/sim.py`:
+Then lengthen the horizon. Run it here (section 6), or locally with
+`python3 code/sim.py`:
+
+<div class="pyrun" data-run="sim" data-script="code/sim.py" data-section="6"></div>
 
 | Horizon $N$ | First move $\omega_0$ (rad/s) | Distance from LQR |
 |---:|---:|---:|
