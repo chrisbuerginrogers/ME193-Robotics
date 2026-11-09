@@ -15,6 +15,7 @@ packages = [ "legoeducation==1.2.0","numpy"]
 "./network/virtual_logic.py" = "./virtual_logic.py"
 "./network/link_logic.py" = "./link_logic.py"
 "./network/power_logic.py" = "./power_logic.py"
+"./network/number_format.py" = "./number_format.py"
 "./Device.py" = "./Device.py"
 "../QLearn/webhub.py" = "./webhub.py"
 "./plot.py" = "./plot.py"
