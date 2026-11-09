@@ -69,6 +69,26 @@ def command_for(channel: str, left: float, right: float, max_speed: float = DEFA
     return int(round(max(-100.0, min(100.0, v * scale))))
 
 
+LEVEL_STEPS = (-1.0, -0.5, 0.0, 0.5, 1.0)   # the five values a simplified label can take, as fractions of Max speed
+
+
+def quantize(value, max_speed: float = DEFAULT_MAX_SPEED) -> float:
+    """Snap a motor speed to the nearest of five levels: 0, +-1/2 and +-1 times max_speed.
+
+    Anything below a quarter of max_speed becomes 0, below three quarters becomes half, and
+    from three quarters up (including anything beyond max_speed) becomes full. The result is
+    still in motor-speed units, so a network trained on it drives the motor directly.
+    """
+    m = _num(max_speed)
+    v = _num(value)
+    if m <= 0 or v != v:
+        return 0.0
+    step = min(1.0, int(abs(v) / m * 2 + 0.5) / 2)    # int() of a positive number rounds down: half goes up
+    if step == 0.0:
+        return 0.0
+    return step * m if v > 0 else -step * m
+
+
 def drive_hint(channels) -> str:
     """A one-line nudge about the Output boxes, or "" when they are set up to steer a car.
 

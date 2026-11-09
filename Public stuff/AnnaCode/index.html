@@ -191,6 +191,9 @@
                     <label class="teleop-field" title="Motor speed when a stick is pushed all the way">Max speed
                         <input type="number" id="teleop-max" value="50" min="5" max="100" step="5" /> %
                     </label>
+                    <label class="teleop-check" title="Instead of recording the exact motor speed, record the nearest of five levels: 0, half or full of Max speed, forward or backward. Fewer choices can be easier to learn. Applies to what is recorded from now on, including corrections while running.">
+                        <input type="checkbox" id="teleop-snap" /> Snap speeds to 5 levels (0, &plusmn;&frac12;, &plusmn;1 of Max speed)
+                    </label>
                     <label class="teleop-check" title="Select this if you are using the virtual controller and the up arrow key drives your robot backwards">
                         <input type="checkbox" id="teleop-reverse" /> Reverse
                     </label>

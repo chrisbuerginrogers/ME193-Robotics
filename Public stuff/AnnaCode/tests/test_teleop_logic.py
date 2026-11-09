@@ -115,5 +115,41 @@ class DriveHint(unittest.TestCase):
         self.assertIn("can't turn", tl.drive_hint(["LeftSpeed", "BothSpeed"]))
 
 
+
+class Quantize(unittest.TestCase):
+    def test_the_five_levels_of_max_speed_50(self):
+        got = {v: tl.quantize(v, 50) for v in (-50, -40, -25, -10, 0, 10, 25, 40, 50)}
+        self.assertEqual(got, {-50: -50.0, -40: -50.0, -25: -25.0, -10: 0.0, 0: 0.0, 10: 0.0, 25: 25.0, 40: 50.0, 50: 50.0})
+
+    def test_boundaries_round_half_up_in_size(self):
+        self.assertEqual(tl.quantize(12.4, 50), 0.0)      # just under a quarter
+        self.assertEqual(tl.quantize(12.5, 50), 25.0)     # a quarter goes to half
+        self.assertEqual(tl.quantize(37.4, 50), 25.0)     # just under three quarters
+        self.assertEqual(tl.quantize(37.5, 50), 50.0)     # three quarters goes to full
+        self.assertEqual(tl.quantize(-12.5, 50), -25.0)   # symmetric for reverse
+
+    def test_beyond_max_speed_is_full(self):
+        self.assertEqual(tl.quantize(100, 50), 50.0)
+        self.assertEqual(tl.quantize(-999, 50), -50.0)
+
+    def test_only_five_distinct_results_ever(self):
+        results = {tl.quantize(v / 4.0, 50) for v in range(-800, 801)}
+        self.assertEqual(results, {-50.0, -25.0, 0.0, 25.0, 50.0})
+        self.assertEqual(sorted(r / 50.0 for r in results), list(tl.LEVEL_STEPS))
+
+    def test_scales_with_max_speed(self):
+        self.assertEqual(tl.quantize(60, 100), 50.0)
+        self.assertEqual(tl.quantize(60, 20), 20.0)
+
+    def test_zero_is_plain_zero_not_negative_zero(self):
+        self.assertEqual(str(tl.quantize(-3, 50)), "0.0")
+
+    def test_bad_input_is_zero(self):
+        self.assertEqual(tl.quantize(None, 50), 0.0)
+        self.assertEqual(tl.quantize(30, 0), 0.0)
+        self.assertEqual(tl.quantize(30, None), 0.0)
+        self.assertEqual(tl.quantize(float("nan"), 50), 0.0)
+
+
 if __name__ == "__main__":
     unittest.main()

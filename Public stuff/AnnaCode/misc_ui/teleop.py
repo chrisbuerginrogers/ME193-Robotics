@@ -49,6 +49,7 @@ def settings() -> dict:
         "max_speed": number("teleop-max", tl.DEFAULT_MAX_SPEED),
         "reverse": checked("teleop-reverse"),
         "log": checked("teleop-log", True),
+        "snap": checked("teleop-snap"),
     }
 
 def output_target(oid: int) -> tuple[str, str]:
@@ -100,6 +101,19 @@ def current_override():
 def labels_for_record() -> dict:
     """Labels for Record: the commanded values, but only while teleop is armed."""
     return current_commands() if state.teleop_armed else {}
+
+def snap_labels(ys: dict) -> dict:
+    """With "Snap to 5 levels" ticked, replace each motor-speed label by the nearest of 0, +-1/2, +-1 times
+    Max speed, so the network learns a handful of choices instead of a continuous speed. Other outputs
+    (light, beep) and the unticked case pass through unchanged."""
+    s = settings()
+    if not s["snap"]:
+        return ys
+    out = dict(ys)
+    for oid, value in ys.items():
+        if output_target(oid)[1] in tl.DRIVE_CHANNELS and value is not None:
+            out[oid] = tl.quantize(value, s["max_speed"])
+    return out
 
 def send(cmds: dict):
     """Send commands to the output devices, skipping repeats of an unchanged value."""

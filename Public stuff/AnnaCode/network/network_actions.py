@@ -298,7 +298,7 @@ async def loop_network():
             # DAgger: keep the human's correction as a training point at this sensor reading.
             xs = {inp["id"]: state.input_values.get(inp["id"], 0.0) for inp in state.inputs}
             ys = {out["id"]: override.get(out["id"], state.output_values.get(out["id"], 0.0)) for out in state.outputs}
-            training.add_point(xs, ys, time.monotonic())
+            training.add_point(xs, teleop.snap_labels(ys), time.monotonic())
         if state.debug_mode:
             arrows.redraw_arrows()
         await asyncio.sleep(0.05)

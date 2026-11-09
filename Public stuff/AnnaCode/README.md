@@ -70,6 +70,13 @@ behavior cloning with a human demonstrator, using the controller as the teacher:
 Light and beep outputs are never driven by the sticks. With the checkbox off,
 Record behaves as before (it records the measured value).
 
+**Snap speeds to 5 levels** simplifies what is recorded. Instead of the exact motor speed,
+each motor label becomes the nearest of 0, half or full of **Max speed**, forward or backward
+(+1, +0.5, 0, -0.5, -1 of it). The network then learns a handful of choices instead of a
+continuous speed, which can be easier to learn and easier to talk about. It applies to rows
+recorded from then on (including corrections while running) and only to motor-speed outputs.
+The levels stay in motor-speed units, so a trained network still drives the motor directly.
+
 The line under the checkboxes also checks your Output boxes and says what is missing
 (in orange): no output chosen yet, no output a stick can drive, or only one drive output.
 With a single output (`BothSpeed` or `Speed`) the car can go forward and back but cannot

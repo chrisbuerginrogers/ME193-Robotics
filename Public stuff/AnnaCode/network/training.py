@@ -269,6 +269,7 @@ async def _record_loop():
         # outputs the sticks don't drive) it is the measured value, as before.
         human = teleop.labels_for_record()
         ys = {o["id"]: human[o["id"]] if o["id"] in human else _read("out", o["id"]) for o in state.outputs}
+        ys = teleop.snap_labels(ys)         # optionally simplify the speeds to five levels
         if None not in xs.values() and None not in ys.values():
             add_point(xs, ys, time.monotonic())
         await asyncio.sleep(SAMPLE_PERIOD)
