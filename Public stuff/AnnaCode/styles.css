@@ -1205,6 +1205,7 @@ body.running #adv-plot { opacity: 1; filter: none; }
 .teleop-check, .teleop-field { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
 .teleop-field input[type="number"] { width: 52px; }
 .teleop-status { flex-basis: 100%; color: #64748b; min-height: 1em; }
+.teleop-status.teleop-warn { color: #b45309; font-weight: 600; }
 
 /* ── Virtual devices (Devices card) ───────────────────────────────────── */
 .devices-header { display: flex; align-items: center; flex-wrap: wrap; gap: 14px; }

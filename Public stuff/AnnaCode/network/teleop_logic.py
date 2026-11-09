@@ -69,6 +69,27 @@ def command_for(channel: str, left: float, right: float, max_speed: float = DEFA
     return int(round(max(-100.0, min(100.0, v * scale))))
 
 
+def drive_hint(channels) -> str:
+    """A one-line nudge about the Output boxes, or "" when they are set up to steer a car.
+
+    channels: the channel chosen in each Output box ("" when nothing is chosen yet).
+    - nothing chosen: tell the student to set the Output box first;
+    - nothing the sticks can drive (e.g. only a light or beep): say so;
+    - a single drive output, or not both wheels: the car can go forward and back but can't turn,
+      because a turn needs the two wheels to get different commands.
+    """
+    chosen = [c for c in channels if c]
+    if not chosen:
+        return "Set the Output box first: pick a device and a speed channel (for a car: LeftSpeed and RightSpeed)."
+    drive = [c for c in chosen if c in DRIVE_CHANNELS]
+    if not drive:
+        return "None of your outputs is a motor speed, so the controller has nothing to drive. Pick a speed channel (for a car: LeftSpeed and RightSpeed)."
+    if "LeftSpeed" in drive and "RightSpeed" in drive:
+        return ""
+    return ("Only one wheel or one combined speed is set as an output, so the controller can drive forward and back "
+            "but can't turn. To turn, use two outputs: LeftSpeed and RightSpeed.")
+
+
 def commands_for_outputs(channels: dict, left: float, right: float, max_speed: float = DEFAULT_MAX_SPEED,
                          reverse: bool = False, deadband: float = DEADBAND) -> dict:
     """channels: {output_id: channel_name}. Returns {output_id: command} for the

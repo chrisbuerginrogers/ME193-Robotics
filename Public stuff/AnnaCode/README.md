@@ -70,6 +70,12 @@ behavior cloning with a human demonstrator, using the controller as the teacher:
 Light and beep outputs are never driven by the sticks. With the checkbox off,
 Record behaves as before (it records the measured value).
 
+The line under the checkboxes also checks your Output boxes and says what is missing
+(in orange): no output chosen yet, no output a stick can drive, or only one drive output.
+With a single output (`BothSpeed` or `Speed`) the car can go forward and back but cannot
+turn, because a turn needs different commands for the two wheels; use `LeftSpeed` and
+`RightSpeed` as two outputs to steer.
+
 No controller? Add a virtual one (next section). If both a real and a virtual
 controller are connected, the first one in the Devices list is used (the status line
 under the checkboxes names it).

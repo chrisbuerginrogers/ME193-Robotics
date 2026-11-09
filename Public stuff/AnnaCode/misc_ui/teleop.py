@@ -120,28 +120,33 @@ def reset_send_cache():
 
 # ── Arm / disarm ─────────────────────────────────────────────────────────────
 
-def set_status(text: str):
+def set_status(text: str, warn: bool = False):
     el = get_id("teleop-status")
     if el:
         el.textContent = text
+        el.classList.toggle("teleop-warn", warn)
 
-def _status_text() -> str:
+def _status_text() -> tuple[str, bool]:
+    """(text, is_warning). The controller's state first, then a nudge about the Output boxes if they
+    are not set up to steer (nothing chosen, nothing a stick can drive, or only one drive output)."""
     ctrl = find_controller()
     if ctrl is None:
-        return "No controller found. Connect one, or add a virtual controller in the Devices card."
-    if Device.link_dropped(ctrl):
-        return f"{ctrl.name}: connection lost, so the sticks are ignored"
-    left, right = tl.stick_values(ctrl.state)
-    text = f"{ctrl.name}: left {left:.0f}, right {right:.0f}"
-    if state.is_running and current_override():
-        text += "  - you are driving"
-    return text
+        text = "No controller found. Connect one, or add a virtual controller in the Devices card."
+    elif Device.link_dropped(ctrl):
+        text = f"{ctrl.name}: connection lost, so the sticks are ignored"
+    else:
+        left, right = tl.stick_values(ctrl.state)
+        text = f"{ctrl.name}: left {left:.0f}, right {right:.0f}"
+        if state.is_running and current_override():
+            text += "  - you are driving"
+    hint = tl.drive_hint(_output_channels().values())
+    return (f"{text}. {hint}" if hint else text), bool(hint) or ctrl is None
 
 async def _loop(generation: int):
     while state.teleop_armed and generation == _generation:
         if not state.is_running:          # while Running, loop_network owns the motors
             send(current_commands())
-        set_status(_status_text())
+        set_status(*_status_text())
         await asyncio.sleep(TICK_S)
 
 def arm():

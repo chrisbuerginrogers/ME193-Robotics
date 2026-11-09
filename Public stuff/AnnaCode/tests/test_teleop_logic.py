@@ -93,5 +93,27 @@ class CommandsForOutputs(unittest.TestCase):
         self.assertEqual(tl.commands_for_outputs({}, 100, 100), {})
 
 
+
+class DriveHint(unittest.TestCase):
+    def test_nothing_chosen_asks_for_the_output_box(self):
+        for channels in ([], [""], ["", ""]):
+            self.assertIn("Set the Output box", tl.drive_hint(channels))
+
+    def test_only_a_light_or_beep_has_nothing_to_drive(self):
+        self.assertIn("nothing to drive", tl.drive_hint(["Light"]))
+        self.assertIn("nothing to drive", tl.drive_hint(["", "Beep"]))
+
+    def test_one_combined_speed_cannot_turn(self):
+        for channels in (["BothSpeed"], ["Speed"], ["LeftSpeed"], ["RightSpeed"]):
+            self.assertIn("can't turn", tl.drive_hint(channels), channels)
+
+    def test_both_wheels_is_fine(self):
+        self.assertEqual(tl.drive_hint(["LeftSpeed", "RightSpeed"]), "")
+        self.assertEqual(tl.drive_hint(["RightSpeed", "LeftSpeed", "Light"]), "")
+
+    def test_a_wheel_plus_a_combined_speed_still_cannot_turn(self):
+        self.assertIn("can't turn", tl.drive_hint(["LeftSpeed", "BothSpeed"]))
+
+
 if __name__ == "__main__":
     unittest.main()
