@@ -140,12 +140,12 @@ Input node reads that sensor. The sensor's chip says "light off" while it is off
 - A sensor that Save power switched off is allowed to be quiet; the chip won't call it
   "No signal". A sensor that should be on and goes silent is still flagged.
 
-How it works, and what is not verified: the page asks the sensor for a mode with the library's
-own `set_color_sensor_mode` (without waiting for the reply) and reads the mode the sensor says it is
-in from every color reading. This was checked against fake sensors only. With a real sensor,
-look in the browser console (Cmd+Opt+J) for `asked the sensor for mode 0 (light off)` and
-watch the light go dark. If a sensor never obeys, the page asks four times, says so once in
-the console, and leaves it alone; untick **Save power** to stop it asking. The logic is in
+How it works: the page asks the sensor for a mode with the library's own `set_color_sensor_mode`
+(without waiting for the reply) and reads the mode the sensor says it is in from every color reading.
+This was tried on a real sensor and works, and was also checked against fake sensors. To see it
+yourself, look in the browser console (Cmd+Opt+J) for `asked the sensor for mode 0 (light off)` and
+watch the light go dark. If a sensor never obeys, the page asks four times, says so once in the
+console, and leaves it alone; untick **Save power** to stop it asking. The logic is in
 `network/power_logic.py` (unit-tested) and `misc_ui/power.py`.
 
 ## Troubleshooting
