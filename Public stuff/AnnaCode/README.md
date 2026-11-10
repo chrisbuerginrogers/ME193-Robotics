@@ -225,6 +225,18 @@ console, and leaves it alone; untick **Save power** to stop it asking. The logic
   internet to fetch PyScript and Plotly.
 - **Hub won't connect at all.** Switch it off and on, and remove any stale
   entry for it in your computer's Bluetooth settings.
+- **One motor of the Double Motor kept running after the output went to 0 (seen once, not
+  reproduced).** With a Color Sensor driving `BothSpeed`, the sensor was taken off so it read 0 and
+  the network's output was 0, but one of the two motors kept turning. The page does not send a
+  real stop for a 0 output: `BothSpeed` goes out as a "movement" command at speed 0, while the
+  **Stop** button and the per-motor outputs use the separate "motor" commands. So a
+  Double Motor that still had commands left over from an earlier session (the Double Motor had been
+  driven from the Table Cloner just before) is the most likely cause, and powering it off and on
+  would clear it. A clean connection did not reproduce it afterwards. If you see it, press
+  **Stop**, then switch the Double Motor off and on. To help track it down, copy the browser
+  console (Cmd+Opt+J) **before** pressing Stop: look for `motor speed jumped … last commanded=…,
+  queue=…` and `Output N jumped …` lines, and note whether the Double Motor had been used by another page
+  or session without being power-cycled.
 
 ## For editing
 
