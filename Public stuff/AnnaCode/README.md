@@ -18,6 +18,9 @@ The page has four tabs along the top of the network:
 
 The old separate Trainer page (`trainer.html`) now just sends you to the **Training** tab.
 
+There is also a second page, the **Table Cloner** (`cloner.html`): behavior cloning with a lookup table instead
+of a network, for a car with a Double Motor and three Color Sensors. See [Table Cloner](#table-cloner-a-car-with-three-color-sensors).
+
 ## What you need
 
 - **Chrome or Edge.** Connecting to hardware uses Web Bluetooth, which Safari
@@ -123,6 +126,54 @@ Virtual devices only have the channels listed above (a real device reports more,
 as the IMU and color channels). Their logic is `misc_ui/virtual_devices.py`,
 with the numbers in `network/virtual_logic.py` (unit-tested).
 
+## Table Cloner: a car with three color sensors
+
+`cloner.html` teaches a car by driving it, and stores what it learns as a table you can read.
+Mount the three Color Sensors pointing left, front and right on a Double Motor base.
+
+1. **Connect device** once per hub: the three Color Sensors, the Double Motor and a Controller.
+   The sensors fill the Left, Front and Right slots in the order you connect them; swap them
+   with the dropdowns if needed.
+2. Set what counts as an object: a close object usually *reads brighter* (reflection above
+   the threshold). Watch the three live readings light up and adjust the number.
+3. Press **Record** and drive with the sticks (left stick = left wheel, right stick = right
+   wheel). Ten times a second, the page notes which sensors see an object (8 patterns) and
+   whether you went Forward, Left, Right or Back, and adds a tally to that row. Standing
+   still teaches nothing.
+4. Press **Run table**. Each tick the car looks up its pattern and does the most-tallied action.
+   A pattern you never taught borrows the answer from the most similar one you did.
+5. **Push a stick to take over.** With *Add my corrections while running* on, your action is
+   tallied too, so the table improves where the car actually goes wrong (the DAgger idea).
+
+**Step mode** (experimental, off by default) changes what the joystick does. Instead of driving the wheels
+continuously, one push gives one whole move. The **left stick** is forward/back: push it forward to drive
+one car length, pull it back to drive one car length backwards. The **right stick** is turn: push it forward
+for a 90 degree right turn, pull it back for a 90 degree left turn. Push a stick past about 60%, hold it for
+a fifth of a second, and the move starts; bring the sticks back to centre before the next one (if both are
+pushed, the one pushed further wins). While recording, each push is one tally in the table. **Run table**
+then makes one move at a time: it looks up the pattern, makes the move, waits for the wheels to stop, and
+looks again. Pushing a stick between moves takes over, as before.
+
+- **One car length** is a setting in wheel degrees (the Double Motor has no idea how long your car is).
+  Start at 360, push forward once, and adjust the number until one push moves one car length.
+- Moves use the Double Motor's own `movement_move_for_degrees` and `movement_turn_for_degrees`; the turn
+  is confirmed by the hub's rotation sensor. The page decides a move is finished when the wheel speeds
+  have stayed at zero for a third of a second (or after 8 seconds).
+- **Driving speed** is the speed of each move. **Reverse** swaps forward and back (not the turns).
+
+**Save power** works as described in [Saving the color sensor's battery](#saving-the-color-sensors-battery), and
+shares its code (`misc_ui/power.py`, `network/power_logic.py`). Here it is **off by default**, because the live
+readings go blank while a light is off and you need them to set the threshold. Tick it once the threshold is right.
+
+The table is saved in the browser; **Clear table** starts over. The hub, Bluetooth and joystick code is shared
+with the main page (`Device.py`, `network/teleop_logic.py`). The table logic is `cloner/table_logic.py` (pure Python,
+tested in `tests/test_table_logic.py`) and the page wiring is `cloner/main.py`. There are no virtual devices on
+this page, so it needs the real hardware and Chrome or Edge.
+
+**What has been tried:** the table logic, the step-mode trigger and the move timing are unit-tested, and the page
+wiring was run against simulated sensors and sticks. It has not yet been driven on a real car, so the Step mode
+numbers (car length, turn direction of the right stick, finish detection) are first guesses to calibrate.
+
 ## Saving the color sensor's battery
 
 The color sensor's light is a real battery drain (one sensor went 80% to 30% to dead in a
@@ -200,6 +251,7 @@ glue/ network/ misc_ui/ plot.py   UI, network model, training, teaching features
 JS/ble.js                         Web Bluetooth wrapper (connect with retries)
 pyscript.toml                     Packages and file map
 trainer.html                      Redirect to the Training tab (old links keep working)
+cloner.html, cloner.toml, cloner/ The Table Cloner page: its own main.py, table_logic.py and small state/sync stand-ins
 tests/                            Unit tests for the pure-logic modules
 ```
 
