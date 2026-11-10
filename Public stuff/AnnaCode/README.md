@@ -59,7 +59,7 @@ behavior cloning with a human demonstrator, using the controller as the teacher:
 2. Tick **Drive with controller**. The left stick drives the left wheel and the
    right stick drives the right wheel (tank drive); with a single output, whichever
    stick you push harder drives it. **Max speed** caps a full push, and **Reverse**
-   flips the direction if forward reads backward.
+   makes the other end of the car the front (see below).
 3. With the neural network *not* running, press **Record** and drive the robot. Each
    row is the sensor reading and what you *commanded*, not the motor's measured speed,
    so there is no lag in the labels.
@@ -93,8 +93,16 @@ under the checkboxes names it).
 The joystick-to-motor mapping is `network/teleop_logic.py` and its tests
 run with plain Python from this folder: `python3 -m unittest discover tests -v`.
 The wiring is `misc_ui/teleop.py`. The right wheel is sign-flipped to match
-the example networks (opposite signs for the two wheels go straight); if your robot
-drives backward, tick **Reverse**.
+the example networks (opposite signs for the two wheels go straight).
+
+**Which way is forward.** Measured on a real car with the Double Motor's light as its front end:
+the Double Motor's `LeftSpeed` output drives the wheel on the car's *right*. So with **Reverse
+unticked**, the up arrow (or both sticks forward) drives the car *away* from the light, down drives
+it toward the light, and left and right turn the car counter-clockwise and clockwise (seen from
+above). Tick **Reverse** if the other end of your car is its front: forward and back swap
+(up drives toward the light), and the sticks switch wheels so left still turns counter-clockwise
+and right still clockwise. A turn never changes direction, because it does not depend on which end
+is the front. (Only the main page works this way; the Table Cloner keeps its own mapping.)
 
 ## No kit with you? Virtual devices
 

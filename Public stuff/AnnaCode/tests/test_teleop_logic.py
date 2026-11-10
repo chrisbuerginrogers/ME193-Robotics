@@ -151,5 +151,55 @@ class Quantize(unittest.TestCase):
         self.assertEqual(tl.quantize(float("nan"), 50), 0.0)
 
 
+class ReverseBox(unittest.TestCase):
+    """The main page's Reverse checkbox, checked against what a real car did (virtual controller
+    arrow keys, Max speed 50, the Double Motor's light as the car's front). Sticks are what the
+    virtual controller's arrow keys give."""
+    KEYS = {"Up": (100, 100), "Down": (-100, -100), "Left": (-100, 100), "Right": (100, -100)}
+
+    def wheels(self, key, reverse_checked):
+        l, r = self.KEYS[key]
+        reverse, swap = tl.chassis_for_reverse_box(reverse_checked)
+        return (tl.command_for("LeftSpeed", l, r, 50, reverse, swap_sides=swap),
+                tl.command_for("RightSpeed", l, r, 50, reverse, swap_sides=swap))
+
+    def test_unticked_matches_the_car(self):
+        self.assertEqual(self.wheels("Up", False), (-50, 50))      # away from the light
+        self.assertEqual(self.wheels("Down", False), (50, -50))    # toward the light
+        self.assertEqual(self.wheels("Left", False), (50, 50))     # counter-clockwise
+        self.assertEqual(self.wheels("Right", False), (-50, -50))  # clockwise
+
+    def test_ticked_matches_the_car(self):
+        self.assertEqual(self.wheels("Up", True), (50, -50))       # toward the light
+        self.assertEqual(self.wheels("Down", True), (-50, 50))     # away from the light
+        self.assertEqual(self.wheels("Left", True), (50, 50))      # still counter-clockwise
+        self.assertEqual(self.wheels("Right", True), (-50, -50))   # still clockwise
+
+    def test_ticking_swaps_forward_and_back_but_never_a_turn(self):
+        for key in ("Up", "Down"):
+            a, b = self.wheels(key, False), self.wheels(key, True)
+            self.assertEqual((a[0], a[1]), (-b[0], -b[1]))
+        for key in ("Left", "Right"):
+            self.assertEqual(self.wheels(key, False), self.wheels(key, True))
+
+    def test_a_single_combined_speed_still_drives_forward_and_back_in_step_with_the_wheels(self):
+        # BothSpeed's motor does LeftSpeed=v, RightSpeed=-v, so v matches the left wheel.
+        for reverse_checked in (False, True):
+            for key in ("Up", "Down"):
+                l, r = self.KEYS[key]
+                rev, swap = tl.chassis_for_reverse_box(reverse_checked)
+                both = tl.command_for("BothSpeed", l, r, 50, rev, swap_sides=swap)
+                self.assertEqual(both, self.wheels(key, reverse_checked)[0])
+
+    def test_swap_sides_defaults_off_so_other_callers_are_unchanged(self):
+        self.assertEqual(tl.command_for("LeftSpeed", -100, 100, 50), -50)           # left stick drives LeftSpeed
+        self.assertEqual(tl.command_for("RightSpeed", -100, 100, 50), -50)          # right stick (mirrored)
+        self.assertEqual(tl.command_for("LeftSpeed", -100, 100, 50, swap_sides=True), 50)
+
+    def test_commands_for_outputs_passes_swap_sides_through(self):
+        out = tl.commands_for_outputs({1: "LeftSpeed", 2: "RightSpeed"}, -100, 100, 50, False, swap_sides=True)
+        self.assertEqual(out, {1: 50, 2: 50})
+
+
 if __name__ == "__main__":
     unittest.main()

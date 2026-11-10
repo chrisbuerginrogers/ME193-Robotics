@@ -77,13 +77,19 @@ def _sticks_and_settings():
     left, right = _sticks_of(ctrl)
     return ctrl, left, right, settings()
 
+def _commands(left, right, s) -> dict:
+    """{output id: command} for these stick values, with the Reverse checkbox applied (see
+    teleop_logic.chassis_for_reverse_box for what it means)."""
+    reverse, swap_sides = tl.chassis_for_reverse_box(s["reverse"])
+    return tl.commands_for_outputs(_output_channels(), left, right, s["max_speed"], reverse, swap_sides=swap_sides)
+
 def current_commands() -> dict:
     """{output id: command} the joysticks give right now (drive outputs only); {} with no controller."""
     got = _sticks_and_settings()
     if got is None:
         return {}
     _, left, right, s = got
-    return tl.commands_for_outputs(_output_channels(), left, right, s["max_speed"], s["reverse"])
+    return _commands(left, right, s)
 
 def current_override():
     """Commands to use instead of the network's, or None when the human isn't driving.
@@ -96,7 +102,7 @@ def current_override():
     _, left, right, s = got
     if not tl.is_deflected(left, right):
         return None
-    return tl.commands_for_outputs(_output_channels(), left, right, s["max_speed"], s["reverse"]) or None
+    return _commands(left, right, s) or None
 
 def labels_for_record() -> dict:
     """Labels for Record: the commanded values, but only while teleop is armed."""

@@ -43,8 +43,27 @@ def _shape(value: float, deadband: float) -> float:
     return sign * (abs(value) - deadband) / (100.0 - deadband) * 100.0
 
 
+def chassis_for_reverse_box(reverse_checked: bool) -> tuple[bool, bool]:
+    """(reverse, swap_sides) to pass to command_for for the main page's Reverse checkbox.
+
+    Measured on a real car, driven by the virtual controller, with the Double Motor's light as
+    the car's front end: the Double Motor's "Left" output drives the wheel on the car's RIGHT, so
+    the left stick has to drive "RightSpeed". Turning left is counter-clockwise seen from above
+    whichever end is the front, so a turn must keep its meaning when the front end changes.
+
+        Reverse unticked: Up drives away from the light, Down toward it,
+                          Left turns counter-clockwise, Right clockwise.
+        Reverse ticked:   forward and back swap (Up drives toward the light, Down away), and the
+                          sticks switch wheels so Left still turns counter-clockwise and Right
+                          still clockwise.
+
+    The unticked mapping is command_for(reverse=True); the ticked one is command_for(swap_sides=True).
+    """
+    return (not reverse_checked, bool(reverse_checked))
+
+
 def command_for(channel: str, left: float, right: float, max_speed: float = DEFAULT_MAX_SPEED,
-                reverse: bool = False, deadband: float = DEADBAND):
+                reverse: bool = False, deadband: float = DEADBAND, swap_sides: bool = False):
     """The integer command (-100..100) a joystick position gives one output channel,
     or None if that channel isn't one a joystick drives.
 
@@ -53,9 +72,13 @@ def command_for(channel: str, left: float, right: float, max_speed: float = DEFA
                   (the example networks use opposite signs for the two wheels to go straight).
     BothSpeed / Speed (a single output) <- whichever stick is pushed harder.
     reverse flips every sign, for a controller whose "forward" reads negative.
+    swap_sides lets the left stick drive what the right stick would (and the other way round), for a
+    car whose "Left" output is on its right side. See chassis_for_reverse_box for how the main page uses both.
     """
     if channel not in DRIVE_CHANNELS:
         return None
+    if swap_sides:
+        left, right = right, left
     l, r = _shape(left, deadband), _shape(right, deadband)
     if channel == "LeftSpeed":
         v = l
@@ -111,12 +134,12 @@ def drive_hint(channels) -> str:
 
 
 def commands_for_outputs(channels: dict, left: float, right: float, max_speed: float = DEFAULT_MAX_SPEED,
-                         reverse: bool = False, deadband: float = DEADBAND) -> dict:
+                         reverse: bool = False, deadband: float = DEADBAND, swap_sides: bool = False) -> dict:
     """channels: {output_id: channel_name}. Returns {output_id: command} for the
     outputs a joystick drives; other outputs are left out."""
     out = {}
     for oid, channel in channels.items():
-        cmd = command_for(channel, left, right, max_speed, reverse, deadband)
+        cmd = command_for(channel, left, right, max_speed, reverse, deadband, swap_sides)
         if cmd is not None:
             out[oid] = cmd
     return out
