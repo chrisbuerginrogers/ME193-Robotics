@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Striped Flags</title>
+<style>
+:root{--bg:#fff;--fg:#1d2330;--mut:#667;--line:#dde1e8;--head:#f2f4f8}
+@media(prefers-color-scheme:dark){:root{--bg:#161a22;--fg:#e6e9ef;--mut:#99a;--line:#2b3140;--head:#1f2430}}
+body{margin:0;padding:16px;background:var(--bg);color:var(--fg);font:15px system-ui,sans-serif}
+h1{margin:0 0 4px;font-size:1.4rem}p{color:var(--mut);margin:0 0 12px}
+input{padding:6px 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--fg);width:min(260px,100%)}
+.wrap{overflow-x:auto;margin-top:12px}
+table{border-collapse:collapse;width:100%}
+th,td{padding:6px 10px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{background:var(--head);cursor:pointer;user-select:none;position:sticky;top:0}
+th[data-k]:hover{text-decoration:underline}
+th .ar{color:var(--mut);font-size:.8em}
+img,svg.f{width:60px;height:40px;object-fit:contain;display:block;border:1px solid var(--line)}
+tr.off td{opacity:.35}tr.off td:first-child{opacity:1}
+th.ck,td.ck{width:1%;text-align:center}input[type=checkbox]{width:auto;cursor:pointer;transform:scale(1.2)}
+label.opt{margin-left:14px;color:var(--mut);white-space:nowrap}
+.sw{display:inline-flex;align-items:center;gap:4px;margin-right:10px}
+.sw i{width:14px;height:14px;border-radius:50%;border:1px solid #8886;display:inline-block}
+</style></head><body>
+<h1>Striped flags</h1>
+<p><span id="n"></span> flags. Click a column header to sort. Stripes are listed left to right (vertical) or top to bottom (horizontal).</p>
+<input id="q" placeholder="Filter by country, continent or color…"> <label class="opt"><input type="checkbox" id="col"> Remove hidden rows from the table</label> <span id="hc" class="opt"></span>
+<div class="wrap"><table><thead><tr id="hr"></tr></thead><tbody id="tb"></tbody></table></div>
+<script>
+const CSV=`region,country,orientation,real_stripes,simplified,notes
+EUROPE,France,vertical,blue;white;red,no,
+EUROPE,Italy,vertical,green;white;red,no,
+EUROPE,Ireland,vertical,green;white;orange,no,
+EUROPE,Belgium,vertical,black;yellow;red,no,
+EUROPE,Romania,vertical,blue;yellow;red,no,same tokens as Chad
+EUROPE,Germany,horizontal,black;red;gold,no,
+EUROPE,Netherlands,horizontal,red;white;blue,no,
+EUROPE,Luxembourg,horizontal,red;white;light blue,no,same tokens as Netherlands
+EUROPE,Russia,horizontal,white;blue;red,no,
+EUROPE,Slovakia,horizontal,white;blue;red,yes,coat of arms dropped
+EUROPE,Serbia,horizontal,red;blue;white,yes,coat of arms dropped
+EUROPE,Bulgaria,horizontal,white;green;red,no,
+EUROPE,Hungary,horizontal,red;white;green,no,
+EUROPE,Lithuania,horizontal,yellow;green;red,no,
+EUROPE,Estonia,horizontal,blue;black;white,no,
+EUROPE,Austria,horizontal,red;white;red,no,
+EUROPE,Latvia,horizontal,carmine;white;carmine,yes,white band is narrow
+EUROPE,Spain,horizontal,red;yellow;red,yes,coat of arms dropped; yellow is double width
+EUROPE,Ukraine,horizontal,blue;yellow,no,
+EUROPE,Poland,horizontal,white;red,no,
+EUROPE,Monaco,horizontal,red;white,no,same as Indonesia
+AFRICA,Nigeria,vertical,green;white;green,no,
+AFRICA,Cote d'Ivoire,vertical,orange;white;green,no,reverse of Ireland
+AFRICA,Niger,horizontal,orange;white;green,yes,orange disc dropped
+AFRICA,Mali,vertical,green;gold;red,no,reverse of Guinea
+AFRICA,Senegal,vertical,green;yellow;red,yes,star dropped
+AFRICA,Guinea,vertical,red;yellow;green,no,
+AFRICA,Ghana,horizontal,red;gold;green,yes,star dropped
+AFRICA,Ethiopia,horizontal,green;yellow;red,yes,emblem dropped
+AFRICA,Cameroon,vertical,green;red;yellow,yes,star dropped
+AFRICA,Chad,vertical,blue;gold;red,no,
+AFRICA,Gabon,horizontal,green;yellow;blue,no,
+AFRICA,Sierra Leone,horizontal,green;white;blue,no,
+AFRICA,Rwanda,horizontal,light blue;yellow;green,yes,sun dropped; blue band is wider
+AFRICA,Egypt,horizontal,red;white;black,yes,eagle dropped
+AFRICA,Libya,horizontal,red;black;green,yes,crescent and star dropped; black is double width
+AFRICA,Malawi,horizontal,black;red;green,yes,sun dropped
+AFRICA,Mauritius,horizontal,red;blue;yellow;green,no,only 4-stripe flag
+AFRICA,The Gambia,horizontal,red;white;blue;white;green,no,white bands are thin
+AFRICA,Botswana,horizontal,light blue;white;black;white;light blue,no,
+ASIA,Indonesia,horizontal,red;white,no,
+ASIA,Yemen,horizontal,red;white;black,no,
+ASIA,Iraq,horizontal,red;white;black,yes,text dropped
+ASIA,India,horizontal,saffron;white;green,yes,chakra dropped
+ASIA,Iran,horizontal,green;white;red,yes,emblem and text dropped
+ASIA,Tajikistan,horizontal,red;white;green,yes,crown and stars dropped
+ASIA,Armenia,horizontal,red;blue;orange,no,
+ASIA,Azerbaijan,horizontal,blue;red;green,yes,crescent and star dropped
+ASIA,Uzbekistan,horizontal,light blue;white;green,yes,crescent; stars and red lines dropped
+ASIA,Mongolia,vertical,red;blue;red,yes,soyombo dropped
+ASIA,Laos,horizontal,red;blue;red,yes,white disc dropped; blue is double width
+ASIA,Lebanon,horizontal,red;white;red,yes,cedar dropped
+ASIA,Myanmar,horizontal,yellow;green;red,yes,star dropped
+ASIA,Thailand,horizontal,red;white;blue;white;red,no,blue is double width
+AMERICAS,Colombia,horizontal,yellow;blue;red,no,yellow is double width
+AMERICAS,Ecuador,horizontal,yellow;blue;red,yes,coat of arms dropped
+AMERICAS,Venezuela,horizontal,yellow;blue;red,yes,stars dropped
+AMERICAS,Bolivia,horizontal,red;yellow;green,no,civil flag
+AMERICAS,Peru,vertical,red;white;red,no,civil flag
+AMERICAS,Canada,vertical,red;white;red,yes,maple leaf dropped
+AMERICAS,Argentina,horizontal,light blue;white;light blue,yes,sun dropped
+AMERICAS,Guatemala,vertical,light blue;white;light blue,yes,emblem dropped
+AMERICAS,Honduras,horizontal,blue;white;blue,yes,stars dropped
+AMERICAS,El Salvador,horizontal,blue;white;blue,yes,coat of arms dropped
+AMERICAS,Nicaragua,horizontal,blue;white;blue,yes,coat of arms dropped
+AMERICAS,Mexico,vertical,green;white;red,yes,emblem dropped
+AMERICAS,Paraguay,horizontal,red;white;blue,yes,emblem dropped
+AMERICAS,Haiti,horizontal,blue;red,yes,coat of arms dropped
+AMERICAS,Barbados,vertical,ultramarine;gold;ultramarine,yes,trident dropped
+AMERICAS,Costa Rica,horizontal,blue;white;red;white;blue,no,red is double width
+AMERICAS,Suriname,horizontal,green;white;red;white;green,yes,star dropped
+`;
+const ISO={"France": "fr", "Italy": "it", "Ireland": "ie", "Belgium": "be", "Romania": "ro", "Germany": "de", "Netherlands": "nl", "Luxembourg": "lu", "Russia": "ru", "Slovakia": "sk", "Serbia": "rs", "Bulgaria": "bg", "Hungary": "hu", "Lithuania": "lt", "Estonia": "ee", "Austria": "at", "Latvia": "lv", "Spain": "es", "Ukraine": "ua", "Poland": "pl", "Monaco": "mc", "Nigeria": "ng", "Cote d'Ivoire": "ci", "Niger": "ne", "Mali": "ml", "Senegal": "sn", "Guinea": "gn", "Ghana": "gh", "Ethiopia": "et", "Cameroon": "cm", "Chad": "td", "Gabon": "ga", "Sierra Leone": "sl", "Rwanda": "rw", "Egypt": "eg", "Libya": "ly", "Malawi": "mw", "Mauritius": "mu", "The Gambia": "gm", "Botswana": "bw", "Indonesia": "id", "Yemen": "ye", "Iraq": "iq", "India": "in", "Iran": "ir", "Tajikistan": "tj", "Armenia": "am", "Azerbaijan": "az", "Uzbekistan": "uz", "Mongolia": "mn", "Laos": "la", "Lebanon": "lb", "Myanmar": "mm", "Thailand": "th", "Colombia": "co", "Ecuador": "ec", "Venezuela": "ve", "Bolivia": "bo", "Peru": "pe", "Canada": "ca", "Argentina": "ar", "Guatemala": "gt", "Honduras": "hn", "El Salvador": "sv", "Nicaragua": "ni", "Mexico": "mx", "Paraguay": "py", "Haiti": "ht", "Barbados": "bb", "Costa Rica": "cr", "Suriname": "sr"};
+const CONT={EUROPE:"Europe",AFRICA:"Africa",ASIA:"Asia",AMERICAS:"Americas"};
+const HEX={blue:"#0b3fa8",white:"#ffffff",red:"#d21f2b",green:"#0a8f3c",orange:"#f58220",black:"#111",yellow:"#ffd500"};
+const LEGO={carmine:"red",gold:"yellow",saffron:"orange",ultramarine:"blue","light blue":"blue"};
+const rows=CSV.trim().split("\n").slice(1).map(l=>{
+  const [region,country,orient,stripes]=l.split(",");
+  return {country,continent:CONT[region],orient,stripes:stripes.split(";").map(c=>LEGO[c]||c),code:ISO[country]};
+});
+const maxN=Math.max(...rows.map(r=>r.stripes.length));
+const cols=[{k:"show",t:""},{k:"flag",t:"Flag"},{k:"country",t:"Country"},{k:"continent",t:"Continent"},{k:"orient",t:"Direction"}];
+for(let i=1;i<=maxN;i++)cols.push({k:"s"+i,t:"Stripe "+i,i:i-1});
+let sk="country",dir=1;const off=new Set();let shown=[],last=null;
+const hr=document.getElementById("hr");
+cols.forEach(c=>{const th=document.createElement("th");th.textContent=c.t;
+  if(c.k==="show"){th.className="ck";th.innerHTML='<input type="checkbox" id="all" title="Show/hide all listed rows">'}
+  else if(c.k!=="flag"){th.dataset.k=c.k;th.onclick=()=>{dir=sk===c.k?-dir:1;sk=c.k;render()}}
+  c.el=th;hr.append(th)});
+function val(r,k){return k[0]==="s"&&k!=="stripes"&&/^s\d+$/.test(k)?(r.stripes[+k.slice(1)-1]||"~"):r[k]}
+function svg(r){const n=r.stripes.length,v=r.orient==="vertical";
+  return `<svg class="f" viewBox="0 0 30 20" preserveAspectRatio="none">`+r.stripes.map((c,i)=>
+   v?`<rect x="${i*30/n}" y="0" width="${30/n+.1}" height="20" fill="${HEX[c]}"/>`:`<rect x="0" y="${i*20/n}" width="30" height="${20/n+.1}" fill="${HEX[c]}"/>`).join("")+`</svg>`}
+function render(){
+  const q=document.getElementById("q").value.toLowerCase();
+  const list=rows.filter(r=>(r.country+" "+r.continent+" "+r.stripes.join(" ")).toLowerCase().includes(q))
+   .sort((a,b)=>{const x=val(a,sk),y=val(b,sk);return dir*String(x).localeCompare(String(y))||a.country.localeCompare(b.country)});
+  shown=document.getElementById("col").checked?list.filter(r=>!off.has(r.country)):list;
+  const on=shown.filter(r=>!off.has(r.country)).length,all=document.getElementById("all");
+  all.checked=on===shown.length&&on>0;all.indeterminate=on>0&&on<shown.length;
+  document.getElementById("hc").textContent=off.size?off.size+" hidden":"";
+  cols.forEach(c=>{if(c.k!=="flag"&&c.k!=="show")c.el.innerHTML=c.t+(c.k===sk?` <span class="ar">${dir>0?"▲":"▼"}</span>`:"")});
+  document.getElementById("n").textContent=shown.length;
+  document.getElementById("tb").innerHTML=shown.map((r,i)=>`<tr class="${off.has(r.country)?"off":""}"><td class="ck"><input type="checkbox" class="rc" data-i="${i}" ${off.has(r.country)?"":"checked"}></td><td>${r.code?`<img loading="lazy" alt="Flag of ${r.country}" src="https://flagcdn.com/w80/${r.code}.png" onerror="this.outerHTML=this.dataset.f" data-f='${svg(r)}'>`:svg(r)}</td>
+   <td>${r.country}</td><td>${r.continent}</td><td>${r.orient}</td>`+
+   Array.from({length:maxN},(_,i)=>{const c=r.stripes[i];return `<td>${c?`<span class="sw"><i style="background:${HEX[c]}"></i>${c}</span>`:""}</td>`}).join("")+`</tr>`).join("");
+}
+document.getElementById("q").oninput=render;
+document.getElementById("col").onchange=render;
+document.getElementById("all").onchange=e=>{shown.forEach(r=>e.target.checked?off.delete(r.country):off.add(r.country));render()};
+document.getElementById("tb").addEventListener("click",e=>{
+  const cb=e.target.closest(".rc");if(!cb)return;
+  const i=+cb.dataset.i,v=cb.checked;
+  const lo=e.shiftKey&&last!==null?Math.min(last,i):i,hi=e.shiftKey&&last!==null?Math.max(last,i):i;
+  for(let j=lo;j<=hi;j++){const c=shown[j].country;v?off.delete(c):off.add(c)}
+  last=i;render();
+});
+render();
+</script></body></html>
