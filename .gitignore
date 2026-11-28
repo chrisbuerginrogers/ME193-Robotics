@@ -29,3 +29,6 @@ Kat-Projects/MQTT/
 # Throwaway venv created by virtualTesting/setup_test_env.py, ignored even
 # inside "Public stuff"
 Public stuff/virtualTesting/test/
+
+# Private project brief for the flags page (the page itself is published)
+Public stuff/flags/README.md
